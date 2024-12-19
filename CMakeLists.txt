@@ -12,6 +12,7 @@ include_directories(${PROJECT_SOURCE_DIR}/third-party/eigen-3.4.0)
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/CommonLib")
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/MLP")
+add_subdirectory("${PROJECT_SOURCE_DIR}/src/SVM")
 
 # Standard CMake Structure 
 
@@ -19,6 +20,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/src/MLP")
 # Scripts folder
 set(SCRIPTS "${PROJECT_SOURCE_DIR}/scripts")
 
+find_package(osqp REQUIRED)
 
 
 add_executable(testMLP "${SCRIPTS}/testMLP.cpp")
@@ -34,6 +36,18 @@ target_compile_options(testMLP_Adam PRIVATE -O3 -Wall -Wextra)
 add_executable(testStoredModel "${SCRIPTS}/testStoredModel.cpp")
 target_link_libraries(testStoredModel PRIVATE mlp_lib)
 target_link_libraries(testStoredModel PRIVATE common_lib)
+target_compile_options(testStoredModel PRIVATE -O3 -Wall -Wextra)
+
+add_executable(trashTest "${SCRIPTS}/trash_test.cpp")
+target_link_libraries(trashTest PRIVATE common_lib)
+target_link_libraries(trashTest PRIVATE osqp::osqp)
+target_link_libraries(trashTest PRIVATE svm_lib)
+target_compile_options(testStoredModel PRIVATE -O3 -Wall -Wextra)
+
+add_executable(testMultiSVM "${SCRIPTS}/testMultiSVM.cpp")
+target_link_libraries(testMultiSVM PRIVATE common_lib)
+target_link_libraries(testMultiSVM PRIVATE osqp::osqp)
+target_link_libraries(testMultiSVM PRIVATE svm_lib)
 target_compile_options(testStoredModel PRIVATE -O3 -Wall -Wextra)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)

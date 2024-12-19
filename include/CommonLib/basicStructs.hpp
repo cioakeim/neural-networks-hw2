@@ -11,11 +11,11 @@ struct SamplePoint{
   uint8_t label; //< The sample's label
 };
 
-
-struct CudaSamplePoint{
-  float* vector;
-  int size;
-  uint8_t label;
+// A collection of samples packed in a matrix (columns are samples)
+struct SampleMatrix{
+  E::MatrixXf vectors;
+  E::VectorXi labels;
 };
+
 
 #endif // !BASIC_STRUCTS_HPP

@@ -1,10 +1,14 @@
 find_package(OpenMP REQUIRED)
 include_directories(${OpenMP_INCLUDE_DIRS})
 
+find_package(osqp REQUIRED)
+
 include_directories(${PROJECT_SOURCE_DIR}/include/CommonLib)
 
-file(GLOB MLP_SOURCES "${PROJECT_SOURCE_DIR}/src/SVM/*.cpp")
+file(GLOB SVM_SOURCES "${PROJECT_SOURCE_DIR}/src/SVM/*.cpp")
 add_library(svm_lib STATIC ${SVM_SOURCES})
+target_compile_options(svm_lib PUBLIC -O3 -ffast-math -Wall -Wextra)
 target_link_libraries(svm_lib PUBLIC OpenMP::OpenMP_CXX)
 target_link_libraries(svm_lib PUBLIC common_lib)
+target_link_libraries(svm_lib PUBLIC osqp::osqp)
 

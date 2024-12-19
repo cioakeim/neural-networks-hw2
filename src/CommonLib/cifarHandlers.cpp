@@ -133,3 +133,50 @@ void Cifar10Handler::printSample(SamplePoint& sample){
 */
 
 
+SampleMatrix Cifar10Handler::getTrainingMatrix(int sample_count){
+  std::vector<SamplePoint> data=this->getTrainingList(sample_count);
+
+  SampleMatrix result;
+  result.vectors=E::MatrixXf(data[0].vector.size(),data.size());
+  result.labels=E::VectorXi(data.size());
+
+  const int size=data.size();
+  for(int i=0;i<size;i++){
+    result.vectors.col(i)=data[i].vector;
+    result.labels(i)=data[i].label;
+  }
+  return result;
+}
+
+
+SampleMatrix Cifar10Handler::getTestMatrix(int sample_count){
+  std::vector<SamplePoint> data=this->getTestList(sample_count);
+
+  SampleMatrix result;
+  result.vectors=E::MatrixXf(data[0].vector.size(),data.size());
+  result.labels=E::VectorXi(data.size());
+
+  const int size=data.size();
+  for(int i=0;i<size;i++){
+    result.vectors.col(i)=data[i].vector;
+    result.labels(i)=data[i].label;
+  }
+  return result;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

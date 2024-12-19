@@ -3,8 +3,11 @@
 
 #include <string>
 #include <filesystem>
+#include <Eigen/Dense>
+#include "CommonLib/basicStructs.hpp"
 
 namespace fs=std::filesystem;
+namespace E=Eigen;
 
 void ensure_a_path_exists(std::string file_path);
 
@@ -12,6 +15,19 @@ std::string create_network_folder(std::string folder_path);
 
 int count_directories_in_path(const fs::path& path);
 
+E::MatrixXf loadMatrixFromFile(const std::string file_path);
+
+void storeMatrixToFile(const std::string file_path,
+                       const E::MatrixXf matrix);
+
+void normalizeSet(SampleMatrix& set);
+
+SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
+                               int class_1_id,
+                               int class_2_id);
+
+SampleMatrix extract1vAllDataset(const SampleMatrix& full_dataset,
+                                 int class_id);
 
 
 #endif

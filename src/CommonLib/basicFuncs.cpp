@@ -1,6 +1,8 @@
 #include "CommonLib/basicFuncs.hpp"
 
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 
 namespace fs=std::filesystem;
 
@@ -36,3 +38,54 @@ int count_directories_in_path(const fs::path& path) {
   }
   return dir_count;
 }
+
+
+E::MatrixXf loadMatrixFromFile(const std::string file_path){
+  std::ifstream file(file_path);
+  if(!file.is_open()){
+    std::cerr<<"Error in loading: "<<file_path<<std::endl;
+    exit(1);
+  }
+  int rows,cols;
+  file>>rows>>cols;
+  E::MatrixXf matrix(rows,cols);
+  for(int i=0;i<rows;i++){
+    for(int j=0;j<cols;j++){
+      file>>matrix(i,j);
+    }
+  }
+  return matrix;
+}
+
+
+void storeMatrixToFile(const std::string file_path,
+                       const E::MatrixXf matrix){
+  std::ofstream file(file_path);
+  if(file.is_open()){
+    file<<matrix.rows()<<" "<<matrix.cols()<<"\n"; // Dimensions
+    file<<matrix<<"\n";
+  }
+  else{
+    std::cerr<<"Error in storing: "<<file_path<<std::endl;
+    exit(1);
+  }
+}
+
+void normalizeSet(SampleMatrix& set){
+  float sigma=std::sqrt(set.vectors.array().pow(2).mean());
+  float mean=set.vectors.array().mean();
+  set.vectors.array()-=mean;
+  set.vectors.array()/=sigma;
+}
+
+
+SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
+                               int class_1_id,
+                               int class_2_id){
+  SampleMatrix result;
+  return result;  
+}
+
+
+SampleMatrix extract1vAllDataset(const SampleMatrix& full_dataset,
+                                 int class_id);

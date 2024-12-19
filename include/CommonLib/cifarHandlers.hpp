@@ -68,6 +68,18 @@ public:
 
 
   /**
+   * @brief Returns training set in form of a whole Eigen matrix
+   */
+  SampleMatrix getTrainingMatrix(int sample_count);
+
+
+  /**
+   * @brief Returns test set in form of a whole Eigen matrix 
+   */
+  SampleMatrix getTestMatrix(int sample_count);
+
+
+  /**
    * @brief Shows the image version of the sample. 
    *
    * Press q to quit.
