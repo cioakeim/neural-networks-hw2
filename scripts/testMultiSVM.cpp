@@ -16,7 +16,7 @@ namespace E=Eigen;
 int main(){
   std::string cifar_path="../data/cifar-10-batches-bin";
   std::string model_path="../data/SVM_models";
-  int training_size=1000;
+  int training_size=5000;
   int test_size=100;
 
   EventTimer et;
