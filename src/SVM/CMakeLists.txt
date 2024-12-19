@@ -13,7 +13,6 @@ else()
 endif()
 
 #find_package(BLAS REQUIRED)
-set(BLAS_LIBRARIES /home/chris/aocl/5.0.0/aocc/lib/libblis.so)
 
 include_directories(${PROJECT_SOURCE_DIR}/include/CommonLib)
 
