@@ -13,15 +13,27 @@ Cifar10Handler::Cifar10Handler(std::string dataset_folder_path)
   for(int i=0;i<5;i++){
     oss << dataset_folder_path << "/data_batch_" << i+1 << ".bin";
     this->batch_file_streams[i].open(oss.str(),std::ios::binary);
+    if(!batch_file_streams[i].is_open()){
+      std::cerr<<"Error in opening: "<<oss.str()<<std::endl;
+      exit(1);
+    }
     oss.str("");
   }
   // Init test batch 
   oss << dataset_folder_path << "/test_batch.bin";
   this->test_batch_stream.open(oss.str(),std::ios::binary);
+  if(!test_batch_stream.is_open()){
+    std::cerr<<"Error in opening: "<<oss.str()<<std::endl;
+    exit(1);
+  }
   oss.str("");
   // Init lut 
   oss<< dataset_folder_path << "/batches.meta.txt";
   std::ifstream class_file(oss.str());
+  if(!class_file.is_open()){
+    std::cerr<<"Error in opening: "<<oss.str()<<std::endl;
+    exit(1);
+  }
   for(int i=0;i<10;i++){
     std::getline(class_file,this->id_to_class_name_lut[i]);
   }
