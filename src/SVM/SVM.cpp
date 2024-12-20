@@ -229,7 +229,8 @@ void SVM::solveQuadraticProblem(){
 
 
 void SVM::storeSupportVectors(){
-  const float C_eps=1e-9;
+  const float C_eps=(C<1)?1e-9*C:1e-9;
+  const float eff_pruning=(C<1)?lagrange_pruning_threshold*C:lagrange_pruning_threshold;
   // Extract all lagrange multipliers
   E::VectorXf a(n);
   std::copy(solver->solution->x,solver->solution->x+n,a.data()); 
@@ -241,7 +242,7 @@ void SVM::storeSupportVectors(){
 
   // Filter support vectors (sv) and margin support vectors (msv)
   //
-  E::ArrayX<bool> a_is_sv= (a.array() > lagrange_pruning_threshold);
+  E::ArrayX<bool> a_is_sv= (a.array() > eff_pruning);
   E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - C_eps));
   E::ArrayX<bool> a_is_msv=(a_is_sv&&a_is_less_than_C);
   // Get dimensions of both SV types
