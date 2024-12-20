@@ -63,6 +63,15 @@ MultiClassSVM::~MultiClassSVM(){
     delete two_class_svms[i];
   }
 }
+void MultiClassSVM::setPath(std::string filepath){
+  this->filepath=filepath;
+  ensure_a_path_exists(filepath);
+  for(int i=0;i<SVM_NUMBER;i++){
+    std::string two_class_path=filepath+"/SVM_"+std::to_string(i);
+    ensure_a_path_exists(two_class_path);
+    two_class_svms[i]->setFolderPath(two_class_path);
+  }
+};
 
 
 void MultiClassSVM::setKernelToAll(std::function<E::MatrixXf(const E::MatrixXf,
@@ -130,20 +139,16 @@ void MultiClassSVM::trainAllSVMs(){
 
 
 void MultiClassSVM::storeSVM(){
-  std::string svm_path=root_filepath+"/"+name;
-  ensure_a_path_exists(svm_path);
   for(int i=0;i<SVM_NUMBER;i++){
-    std::string two_class_path=svm_path+"/SVM_"+std::to_string(i);
-    ensure_a_path_exists(two_class_path);
-    two_class_svms[i]->storeToFile(two_class_path);
+    std::string two_class_path=filepath+"/SVM_"+std::to_string(i);
+    two_class_svms[i]->storeToFile();
   }
 }
 
 
 void MultiClassSVM::loadSVM(){
-  std::string svm_path=root_filepath+"/"+name;
   for(int i=0;i<SVM_NUMBER;i++){
-    two_class_svms[i]->loadFromFile(svm_path);
+    two_class_svms[i]->loadFromFile();
   }
   
 }

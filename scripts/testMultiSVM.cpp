@@ -16,6 +16,7 @@ namespace E=Eigen;
 int main(){
   std::string cifar_path="../data/cifar-10-batches-bin";
   std::string model_path="../data/SVM_models";
+  std::string svm_name="test";
   int training_size=5000;
   int test_size=100;
 
@@ -36,12 +37,12 @@ int main(){
 
 
   MultiClassSVM multSVM(training_set,test_set);
-  multSVM.setNameAndPath("test_name_store", model_path);
+  multSVM.setPath(model_path+svm_name);
 
   float C=1000;
   multSVM.setCToAll(C);
   KernelParameters kernel_parameters;
-  kernel_parameters.rbf_gamma=1;
+  kernel_parameters.rbf_sigma=1;
   multSVM.setKernelToAll(rbf_kernel,kernel_parameters);
 
   /**

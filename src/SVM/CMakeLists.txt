@@ -5,6 +5,8 @@ option(OSQP_MANUAL_LINK "Set to On if OSQP isn't in default location" OFF)
 
 set(OSQP_LIBROOT /home/c/cioakeim/osqp/)
 
+
+
 if(OSQP_MANUAL_LINK)
   include_directories(${OSQP_LIBROOT}/include) 
   link_directories(${OSQP_LIBROOT}/lib64)

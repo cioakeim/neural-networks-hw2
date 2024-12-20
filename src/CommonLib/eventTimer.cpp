@@ -1,4 +1,6 @@
 #include "CommonLib/eventTimer.hpp"
+#include <fstream>
+#include <string>
 
 
 void EventTimer::start(std::string label){
@@ -24,8 +26,21 @@ void EventTimer::stop(){
   currentEventLabel.clear();
 }
 
+
 void EventTimer::displayIntervals(){
-  for(const auto event: events){
-    std::cout<<event.label<<": "<<event.time<<" seconds."<<std::endl;
+  for(const auto& event: events){
+    std::cout<<event.label<<" (seconds), "<<event.time<<std::endl;
   }
+}
+
+void EventTimer::writeToFile(std::string file_path){
+  std::ofstream file(file_path);
+  if(!file.is_open()){
+    std::cerr<<"Error opening: "<<file_path<<std::endl;
+    exit(1);
+  }
+  for(const auto& event: events){
+    file<<event.label<<" (s), "<<event.time<<"\n";
+  }
+  file.close();
 }

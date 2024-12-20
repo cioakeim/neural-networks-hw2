@@ -14,9 +14,8 @@
  */
 class MultiClassSVM{
 private:
-  // Name and filepath of SVM
-  std::string name;
-  std::string root_filepath;
+  // Filepath of SVM
+  std::string filepath;
 
   // The dataset
   const SampleMatrix& training_set;
@@ -35,11 +34,7 @@ public:
   ~MultiClassSVM();
 
   // Setters / Getters (only ones needed are implemented)
-  void setNameAndPath(std::string name,
-                      std::string root_filepath){
-    this->name=name;
-    this->root_filepath=root_filepath;
-  };
+  void setPath(std::string filepath);
 
   SVM* getSVMPointer(int class_1_idx,int class_2_idx){
     return two_class_svms[pair_to_svm_lut[class_1_idx][class_2_idx]];

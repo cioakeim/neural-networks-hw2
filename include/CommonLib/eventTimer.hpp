@@ -23,7 +23,9 @@ public:
   void stop();
 
   void displayIntervals();
+  void writeToFile(std::string file_path);
 
+  void clearEvents(){events.clear();}
 };
 
 #endif

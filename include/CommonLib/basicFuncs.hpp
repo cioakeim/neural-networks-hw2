@@ -22,6 +22,13 @@ void storeMatrixToFile(const std::string file_path,
 
 void normalizeSet(SampleMatrix& set);
 
+
+std::vector<int> stringToVector(std::string str);
+
+
+std::vector<int> findIndices(const E::VectorXi& labels, int key1, int key2);
+
+
 SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
                                int class_1_id,
                                int class_2_id);

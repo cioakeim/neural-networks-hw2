@@ -9,7 +9,7 @@ struct KernelParameters{
   int poly_d;
   float poly_c;
 
-  float rbf_gamma;
+  float rbf_sigma;
 };
 
 // In all implementations a is input and b is SV set

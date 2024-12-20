@@ -51,6 +51,9 @@ private:
   // Event timer for keeping track of time intervals
   EventTimer et;
 
+  // Location of svm's store space 
+  std::string folder_path;
+
 
 public:
   // Constructors
@@ -75,14 +78,16 @@ public:
     this->kernel_parameters=kernel_parameters;
   }
   void setC(float C){this->C=C;}
+  void setFolderPath(std::string folder_path){this->folder_path=folder_path;}
+
 
   const SampleMatrix& getTrainingSetRef(){return training_set;}
   const SampleMatrix& getTestSetRef(){return test_set;}
 
   // Store the solution
-  void storeToFile(std::string folder_path);
+  void storeToFile();
   // Load solution
-  void loadFromFile(std::string folder_path);
+  void loadFromFile();
 
   // Workflow
 
@@ -104,7 +109,9 @@ public:
 
   // Usage of model
 
-  E::VectorXi predictSet(const E::MatrixXf samples);
+  E::VectorXf output(const E::MatrixXf& samples);
+
+  E::VectorXi predictSet(const E::VectorXf& output);
 
   void testOnSet(const SampleMatrix& set,
                  float& accuracy,
@@ -120,8 +127,16 @@ public:
 
   void solveAndStore();
 
+
+  // For event timer
   void displayCurrentIntervals(){et.displayIntervals();}
 
+  void storeEventsToFile();
+  void startEvent(std::string label){et.start(label);}
+  void stopEvent(){et.stop();}
+
+  // Safety checks
+  bool areSupportVectorsEmpty(){return support_vectors.cols()<=0;}
 
 };
 

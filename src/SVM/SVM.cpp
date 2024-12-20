@@ -1,4 +1,5 @@
 #include "SVM/SVM.hpp"
+#include <osqp/osqp_api_constants.h>
 #include <osqp/osqp_api_functions.h>
 #include <osqp/osqp_api_utils.h>
 #include <Eigen/Sparse>
@@ -33,13 +34,14 @@ static void freeOSQPMatrix(OSQPCscMatrix& mat){
 
 
 SVM::SVM(SampleMatrix& training_set,SampleMatrix& test_set):
-  class_1_test(training_set.vectors),
-  class_2_test(test_set.vectors),
   class_1_train(training_set.vectors),
+  class_1_test(training_set.vectors),
   class_2_train(training_set.vectors),
+  class_2_test(test_set.vectors),
   m(1+training_set.vectors.cols()),
   n(training_set.vectors.cols()){
   // Set all matrix pointers to 0
+  std::cout<<"INIT"<<std::endl;
   this->training_set=training_set;
   this->test_set=test_set;
   solver=nullptr;
@@ -97,17 +99,26 @@ static SampleMatrix matricesToSampleMatrix(const E::MatrixXf& class_1,
   return result;
 }
 
-void SVM::storeToFile(std::string folder_path){
+
+void SVM::storeToFile(){
   storeMatrixToFile(folder_path+"/lagrange_times_labels.csv", 
                     lagrange_times_labels);
   storeMatrixToFile(folder_path+"/support_vectors.csv", support_vectors);
   E::MatrixXf temp(1,1);
   temp(0,0)=b;
   storeMatrixToFile(folder_path+"/bias.csv",temp);
+  // Write the event timer as well 
+}
+
+void SVM::storeEventsToFile(){
+  std::string filepath=folder_path+"/time_info";
+  ensure_a_path_exists(filepath);
+  et.writeToFile(filepath+"/C_"+std::to_string(C)+".txt");
+  et.clearEvents();
 }
 
 
-void SVM::loadFromFile(std::string folder_path){
+void SVM::loadFromFile(){
   lagrange_times_labels=loadMatrixFromFile(folder_path+"/lagrange_times_labels.csv");
   support_vectors=loadMatrixFromFile(folder_path+"/support_vectors.csv");
   E::MatrixXf temp=loadMatrixFromFile(folder_path+"/bias.csv");
@@ -128,10 +139,10 @@ void SVM::clearDataset(){
   test_set.labels.resize(0);
 }
 
+
 void SVM::clearSolution(){
   lagrange_times_labels.resize(0);
   support_vectors.resize(0,0);
-
 }
 
 
@@ -214,41 +225,44 @@ void SVM::solveQuadraticProblem(){
   if(code!=0){
     std::cerr<<"Error in qsolve.."<<std::endl;
   }
-
-
 }
 
 
 void SVM::storeSupportVectors(){
+  const float C_eps=1e-9;
   // Extract all lagrange multipliers
   E::VectorXf a(n);
   std::copy(solver->solution->x,solver->solution->x+n,a.data()); 
   osqp_cleanup(solver);
-  //std::cout<<"A: "<<std::endl;
-  //std::cout<<a<<std::endl;
+
+  if(a.array().isNaN().sum()>0){
+    std::cerr<<"A containts NaNs!"<<std::endl;
+  }
 
   // Filter support vectors (sv) and margin support vectors (msv)
   //
-  //std::cout<<"Test"<<std::endl;
-  E::ArrayX<bool> a_is_positive = (a.array() > lagrange_pruning_threshold);
-  //std::cout<<"Test"<<std::endl;
-  E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - lagrange_pruning_threshold));
-  //std::cout<<"Test"<<std::endl;
-  //E::VectorXi a_is_positive=(a.array()>lagrange_pruning_threshold);
-  //E::VectorXi a_is_less_than_C=(a.array()<(C-lagrange_pruning_threshold));
+  E::ArrayX<bool> a_is_sv= (a.array() > lagrange_pruning_threshold);
+  E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - C_eps));
+  E::ArrayX<bool> a_is_msv=(a_is_sv&&a_is_less_than_C);
   // Get dimensions of both SV types
-  const int sv_nz=a_is_positive.cast<int>().sum();
-  //std::cout<<"Test"<<std::endl;
+
+  const int sv_nz=a_is_sv.cast<int>().sum();
+  std::vector<int> sv_idx;
+  const int msv_nz=a_is_msv.cast<int>().sum();
+  std::vector<int> msv_idx;
   if(sv_nz==0){
     std::cerr<<"No support vectors found.. Exiting.."<<std::endl;
     exit(1);
   }
-  const int msv_nz=(a_is_positive&&a_is_less_than_C).cast<int>().sum();
-  /**
-  std::cout<<"MSNZ: "<<msv_nz<<std::endl;
-  std::cout<<"SNZ: "<<sv_nz<<std::endl;
-  std::cout<<"Test"<<std::endl;
-  */
+
+  // Get indices of svs 
+  const int size=a.size();
+  for(int i=0;i<size;i++){
+    if(a_is_sv(i)==true)
+      sv_idx.push_back(i);
+    if(a_is_msv(i)==true)
+      msv_idx.push_back(i);
+  }
 
   // Allocate memory for stored vectors 
   lagrange_times_labels=E::VectorXf(sv_nz);
@@ -258,9 +272,20 @@ void SVM::storeSupportVectors(){
   E::VectorXf msv_labels=E::VectorXf(msv_nz);
   E::VectorXf msv_a_labels=E::VectorXf(msv_nz);
 
+  // SV map
+  for(int i=0;i<sv_nz;i++){
+    support_vectors.col(i)=training_set.vectors.col(sv_idx[i]); 
+    lagrange_times_labels(i)=a[sv_idx[i]]*training_set.labels[sv_idx[i]];
+  }
+  // MSV map
+  for(int i=0;i<msv_nz;i++){
+    msvs.col(i)=training_set.vectors.col(msv_idx[i]); 
+    msv_labels(i)=training_set.labels[msv_idx[i]];
+    msv_a_labels(i)=a[msv_idx[i]]*training_set.labels[msv_idx[i]];
+  }
+  /**
   int curr_col=0;
   int curr_m_col=0;
-  //std::cout<<"Here good\n"<<std::endl;
   for(int i=0;i<sv_nz;i++){
     // If multiplier is posibive
     if(a[i]>lagrange_pruning_threshold){
@@ -268,51 +293,53 @@ void SVM::storeSupportVectors(){
       support_vectors.col(curr_col)=training_set.vectors.col(i);
       lagrange_times_labels(curr_col++)=a[i]*training_set.labels[i];
       // If it's also <C 
-      if(a[i]<C-lagrange_pruning_threshold){
+      if(a[i]<C-C_eps){
         msvs.col(curr_m_col)=training_set.vectors.col(i);
         msv_a_labels(curr_m_col)=a[i]*training_set.labels[i];
         msv_labels(curr_m_col++)=training_set.labels[i];
       }
     } 
   }
-
-  const E::MatrixXf x=kernel(msvs,msvs,kernel_parameters)*
-                      msv_a_labels;
-  b=(msv_labels-x).mean();
-  
-
-  /**
-  std::cout<<"B: "<<b<<std::endl;
-  std::cout<<"Size: "<<x.rows()<<" "<<x.cols()<<std::endl;
-
-  std::cout<<"Labels: "<<training_set.labels.size()<<std::endl;
+  std::cout<<"Curr m vs size: "<<curr_m_col<<" "<<msvs.cols()<<std::endl;
+  std::cout<<"Curr  vs size: "<<curr_col<<" "<<support_vectors.cols()<<std::endl;
   */
 
+  std::cout<<"MSV NANS: "<<(msvs.array().isNaN().cast<int>().sum())<<std::endl;
+  
+  const E::MatrixXf x=kernel(msvs,msvs,kernel_parameters)*
+                      msv_a_labels;
+  std::cout<<"X NANS: "<<(x.array().isNaN().cast<int>()).sum()<<std::endl;
+  b=(msv_labels-x).mean();
+  std::cout<<"B: "<<b<<std::endl;
 }
 
 
-E::VectorXi SVM::predictSet(const E::MatrixXf samples){
-  std::cout<<"Sizes: "<<samples.cols()<<" "<<support_vectors.cols()<<" "<<
-          lagrange_times_labels.size()<<std::endl;
-  const E::VectorXf x=kernel(samples,support_vectors,kernel_parameters)*lagrange_times_labels;
-  std::cout<<"End"<<std::endl;
-  return (2*((x.array()+b).array()>0).cast<float>()-1).cast<int>();
+E::VectorXf SVM::output(const E::MatrixXf& samples){
+  const E::VectorXf wx=kernel(samples,support_vectors,kernel_parameters)*lagrange_times_labels;
+  return wx.array()+b;
+}
+
+
+E::VectorXi SVM::predictSet(const E::VectorXf& output){
+  return (2*((output.array()).array()>0).cast<float>()-1).cast<int>();
 }
 
 
 void SVM::testOnSet(const SampleMatrix& set,
                     float& accuracy,
                     float& mean_hinge_loss){
-  et.start("Test on set");
-  std::cout<<"Check"<<std::endl;
-  E::VectorXi pred=predictSet(set.vectors);
-  std::cout<<"Check"<<std::endl;
+  // Output
+  const E::VectorXf out=output(set.vectors);
+  // Prediction (+-1)
+  const E::VectorXf pred=predictSet(out).cast<float>();
 
-  accuracy=(pred.array()==set.labels.array()).cast<float>().mean();
+  // Calculate accuracy
+  accuracy=(pred.array()==set.labels.cast<float>().array()).cast<float>().mean();
+  // For mean hinge loss
+  mean_hinge_loss=(1-(set.labels.array()).cast<float>()*out.array()).cwiseMax(0).mean();
 
   std::cout<<"C: "<<C<<" Accuracy: "<<accuracy<<std::endl;
-  et.stop();
-  
+  std::cout<<"Mean hinge loss: "<<mean_hinge_loss<<std::endl;
 }
 
 

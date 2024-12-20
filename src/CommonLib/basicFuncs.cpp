@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <omp.h>
 
 namespace fs=std::filesystem;
 
@@ -78,11 +79,50 @@ void normalizeSet(SampleMatrix& set){
   set.vectors.array()/=sigma;
 }
 
+std::vector<int> stringToVector(std::string str){
+    std::vector<int> result;
+
+    // Use a stringstream to split the input by commas
+    std::stringstream ss(str);
+    std::string token;
+    // Extract integers from the comma-separated string
+    while (std::getline(ss, token, ',')) {
+        try {
+            // Convert each token to an integer and store it in the vector
+            result.push_back(std::stoi(token));
+        } catch (const std::invalid_argument& e) {
+            std::cerr<<"Invalid argument: "<< token <<" is not a valid integer."<< std::endl;
+            exit(1);
+        }
+    }
+    return result;
+}
+
+
+std::vector<int> findIndices(const E::VectorXi& labels, int key1, int key2){
+  std::vector<int> result;
+  for(int i=0;i<labels.size();i++){
+    if(labels(i)==key1 || labels(i)==key2){
+      result.push_back(i);
+    }
+  }
+  return result;
+}
+
 
 SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
                                int class_1_id,
                                int class_2_id){
   SampleMatrix result;
+  std::vector<int> idx_vec=findIndices(full_dataset.labels,class_1_id,class_2_id);
+  result.vectors=E::MatrixXf(full_dataset.vectors.rows(),idx_vec.size());
+  result.labels=E::VectorXi(idx_vec.size());
+  const int size=idx_vec.size();
+  #pragma omp parallel for
+  for(int i=0;i<size;i++){
+    result.vectors.col(i)=full_dataset.vectors.col(idx_vec[i]);
+    result.labels(i)=(full_dataset.labels(idx_vec[i])==class_1_id)?+1:-1;
+  }
   return result;  
 }
 
