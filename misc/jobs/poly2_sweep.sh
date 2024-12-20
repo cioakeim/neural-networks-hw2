@@ -5,7 +5,7 @@
 #SBATCH --output=test_poly2.stdout
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
-#SBATCH --time=3:00:00
+#SBATCH --time=4:00:00
 #SBATCH --array=0-7
 
 
@@ -16,7 +16,7 @@ source /home/c/cioakeim/aocl/5.0.0/aocc/amd-libs.cfg
 sigma_list=("1e-3" "5e-3" "1e-2" "2.5e-2" "5e-2" "7.5e-2" "1e-1" "5e-1" "1" "5")
 const_list=("1e-3" "5e-3" "1e-2" "2.5e-2" "1e-1" "1" "10" "50")
 
-store_path="/home/c/cioakeim/nns/SVMs/POLY/test_$SLURM_ARRAY_TASK_ID"
+store_path="/home/c/cioakeim/nns/SVMs/POLY2/test_$SLURM_ARRAY_TASK_ID"
 dataset_path="/home/c/cioakeim/nns/cifar-10-batches-bin"
 class_1_id="0"
 class_2_id="1"

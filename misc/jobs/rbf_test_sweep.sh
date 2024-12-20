@@ -5,7 +5,7 @@
 #SBATCH --output=test_rbf.stdout
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
-#SBATCH --time=3:00:00
+#SBATCH --time=4:00:00
 #SBATCH --array=0-9
 
 
