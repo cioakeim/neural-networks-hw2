@@ -11,6 +11,8 @@
 
 module load gcc/13.2.0-iqpfkya cmake/3.27.9-nmh6tto eigen/3.4.0-titj7ys 
 
+source /home/c/cioakeim/aocl/5.0.0/aocc/amd-libs.cfg
+
 sigma_list=("1e-3" "5e-3" "1e-2" "2.5e-2" "5e-2" "7.5e-2" "1e-1" "5e-1" "1" "5")
 
 store_path="/home/c/cioakeim/nns/SVMs/"
