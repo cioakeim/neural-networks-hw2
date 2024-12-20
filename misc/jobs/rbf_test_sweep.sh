@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
 #SBATCH --time=3:00:00
-#SBATCH --array=1-10
+#SBATCH --array=0-9
 
 
 module load gcc/13.2.0-iqpfkya cmake/3.27.9-nmh6tto eigen/3.4.0-titj7ys 
@@ -23,7 +23,7 @@ training_size="50000"
 test_size="10000"
 C_list="1e-3,5e-3,1e-2,1e-1,1,5,10,50,100,1000"
 kernel_type="RBF"
-sigma="{sigma_list[$SLURM_ARRAY_TASK_ID]}"
+sigma="${sigma_list[$SLURM_ARRAY_TASK_ID]}"
 
 
 project_dir="/home/c/cioakeim/nns/neural-networks-hw2"
