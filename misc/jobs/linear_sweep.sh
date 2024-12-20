@@ -13,7 +13,7 @@ module load gcc/13.2.0-iqpfkya cmake/3.27.9-nmh6tto eigen/3.4.0-titj7ys
 source /home/c/cioakeim/aocl/5.0.0/aocc/amd-libs.cfg
 
 
-store_path="/home/c/cioakeim/nns/SVMs/"
+store_path="/home/c/cioakeim/nns/SVMs/LINEAR"
 dataset_path="/home/c/cioakeim/nns/cifar-10-batches-bin"
 class_1_id="0"
 class_2_id="1"

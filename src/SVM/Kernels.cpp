@@ -10,7 +10,7 @@ E::MatrixXf linear_kernel(const E::MatrixXf& a,const E::MatrixXf& b,
 
 E::MatrixXf polynomial_kernel(const E::MatrixXf& a,const E::MatrixXf& b,
                               KernelParameters param){
-  const E::MatrixXf temp=a.transpose()*b;
+  const E::MatrixXf temp=(a.transpose()*b).array()/(a.rows());
   return (temp.array()+param.poly_c).array().pow(param.poly_d);
 }
 
