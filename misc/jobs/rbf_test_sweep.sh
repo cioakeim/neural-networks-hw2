@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
 #SBATCH --time=3:00:00
-#SBATCH --array=1
+#SBATCH --array=1-10
 
 
 module load gcc/13.2.0-iqpfkya cmake/3.27.9-nmh6tto eigen/3.4.0-titj7ys 
@@ -33,7 +33,6 @@ cmake -DOSQP_MANUAL_LINK=ON -DBLAS_LIBRARIES="/home/c/cioakeim/aocl/5.0.0/aocc/l
 make
 
 
-./test2ClassSVM "$store_path" "$dataset_path" "$training_size" "$test_size" "$class_1_id" "$class_2_id" \ 
-  "$C_list" "$kernel_type" "$sigma"
+./test2ClassSVM "$store_path" "$dataset_path" "$training_size" "$test_size" "$class_1_id" "$class_2_id" "$C_list" "$kernel_type" "$sigma"
 
 
