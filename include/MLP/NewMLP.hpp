@@ -29,6 +29,7 @@ protected:
   VectorFunction activation_derivative;
   // Parameters
   const float learning_rate;
+  
   const int batch_size;
   // Training set
   MatrixXf training_set;

@@ -28,6 +28,7 @@ int main(int argc,char* argv[]){
   config.kernel_parameters.rbf_sigma=0.1;
   config.kernel_type=RBF;
   configureFromArguments(argc,argv,config);
+  std::cout<<"Configuration done"<<std::endl;
 
   EventTimer et;
   et.start("Script total time");

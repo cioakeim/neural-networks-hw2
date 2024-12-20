@@ -31,8 +31,8 @@ project_dir="/home/c/cioakeim/nns/neural-networks-hw2"
 cd "$project_dir"
 mkdir -p build
 cd build
-cmake -DOSQP_MANUAL_LINK=ON -DBLAS_LIBRARIES="/home/c/cioakeim/aocl/5.0.0/aocc/lib/libblis.so" ..
-make
+#cmake -DOSQP_MANUAL_LINK=ON -DBLAS_LIBRARIES="/home/c/cioakeim/aocl/5.0.0/aocc/lib/libblis.so" ..
+#make
 
 
 ./test2ClassSVM "$store_path" "$dataset_path" "$training_size" "$test_size" "$class_1_id" "$class_2_id" "$C_list" "$kernel_type" "$sigma"
