@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-#SBATCH --job-name=test_1v1_svm
+#SBATCH --job-name=1v1_linear
 #SBATCH --partition=rome
-#SBATCH --output=test_svm.stdout
+#SBATCH --output=test_linear.stdout
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
 #SBATCH --time=0:30:00

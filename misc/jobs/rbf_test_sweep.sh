@@ -1,8 +1,8 @@
 #!/bin/bash 
 
-#SBATCH --job-name=test_1v1_svm
+#SBATCH --job-name=1v1_rbf
 #SBATCH --partition=rome
-#SBATCH --output=test_svm.stdout
+#SBATCH --output=test_rbf.stdout
 #SBATCH --nodes=1
 #SBATCH --ntasks=8
 #SBATCH --time=3:00:00
