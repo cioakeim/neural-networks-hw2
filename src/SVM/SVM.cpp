@@ -378,14 +378,14 @@ void SVM::solveQuadraticProblem(){
   settings=(OSQPSettings*)malloc(sizeof(OSQPSettings));
   // Default setup
   osqp_set_default_settings(settings);
-  settings->linsys_solver=OSQP_INDIRECT_SOLVER;
-  settings->polishing=true;
+  //settings->linsys_solver=OSQP_INDIRECT_SOLVER;
+  //settings->polishing=true;
   //settings->linsys_solver=OSQP_DIRECT_SOLVER;
   omp_set_num_threads(8);
   setenv("MKL_DOMAIN_NUM_THREADS", "8", 1);
   //mkl_set_num_threads_local(8);
-  settings->eps_abs=1e-8;
-  settings->eps_rel=1e-8;
+  settings->eps_abs=1e-6;
+  settings->eps_rel=1e-6;
 
   
   

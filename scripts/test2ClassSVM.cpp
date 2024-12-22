@@ -18,12 +18,12 @@ int main(int argc,char* argv[]){
   SVM2ClassConfig config;
   config.store_path="../data/SVM_models/linear_model";
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.training_size=40000;
+  config.training_size=30000;
   config.test_size=10000;
   config.class1_id=0;
   config.class2_id=2;
   //config.C_list={1e-3,5e-3,1e-2,1e-1,1,5,10,50,100,1000};
-  config.C_list={0.1,1,2,5,10,100};
+  config.C_list={1e-3,1e-2,1e-1,1,2,5,10,100};
   config.kernel_parameters.poly_c=1;
   config.kernel_parameters.poly_d=2;
   config.kernel_parameters.rbf_sigma=0.1;

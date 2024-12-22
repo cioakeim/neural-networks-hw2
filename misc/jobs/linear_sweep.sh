@@ -4,13 +4,15 @@
 #SBATCH --partition=rome
 #SBATCH --output=test_linear.stdout
 #SBATCH --nodes=1
-#SBATCH --ntasks=8
+#SBATCH --ntasks=16
 #SBATCH --time=0:30:00
-
 
 module load gcc/13.2.0-iqpfkya cmake/3.27.9-nmh6tto eigen/3.4.0-titj7ys 
 
-source /home/c/cioakeim/aocl/5.0.0/aocc/amd-libs.cfg
+MY_HOME="/home/c/cioakeim"
+
+source $MY_HOME/aocl/5.0.0/aocc/amd-libs.cfg
+source $MY_HOME/intel/oneapi/mkl/latest/env/vars.sh lp64
 
 
 store_path="/home/c/cioakeim/nns/SVMs/LINEAR"
@@ -28,7 +30,7 @@ project_dir="/home/c/cioakeim/nns/neural-networks-hw2"
 cd "$project_dir"
 mkdir -p build
 cd build
-cmake -DOSQP_MANUAL_LINK=ON -DBLAS_LIBRARIES="/home/c/cioakeim/aocl/5.0.0/aocc/lib/libblis.so" ..
+cmake -DMY_HOME_DIR="$MY_HOME" -DMKL_INTERFACE_FULL=intel_lp64 ..
 make
 
 
