@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-set(MY_HOME_DIR "/home/chris")
+set(MY_HOME_DIR "/home/chris" CACHE PATH "Home Dir")
 set(AOCL_BLAS_LIB "${MY_HOME_DIR}/aocl/5.0.0/aocc/lib/libblis-mt.so" CACHE PATH "BLAS")
 set(AOCL_LAPACK_LIB "${MY_HOME_DIR}/aocl/5.0.0/aocc/lib/libflame.so" CACHE PATH "LAPACK")
 set(ENABLE_MULTITHREADING ON CACHE STRING "MT")

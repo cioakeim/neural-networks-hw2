@@ -16,6 +16,7 @@ else()
 endif()
 
 
+include_directories(${MY_HOME_DIR}/my_libroot/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/CommonLib)
 
 file(GLOB SVM_SOURCES "${PROJECT_SOURCE_DIR}/src/SVM/*.cpp")
