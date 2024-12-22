@@ -19,6 +19,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/src/SVM")
 
 # Standard CMake Structure 
 
+include_directories(${MY_HOME_DIR}/my_libroot/include)
 
 # Scripts folder
 set(SCRIPTS "${PROJECT_SOURCE_DIR}/scripts")
