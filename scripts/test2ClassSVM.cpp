@@ -1,8 +1,10 @@
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 #include <string>
 #include "osqp/osqp.h"
 #include "omp.h"
+#include <mkl.h>
 #include <Eigen/Dense>
 #include "CommonLib/cifarHandlers.hpp"
 #include "CommonLib/basicFuncs.hpp"
@@ -10,29 +12,103 @@
 #include "SVM/Kernels.hpp"
 #include "SVM/Configure.hpp"
 #include "CommonLib/eventTimer.hpp"
+#include <osqp/osqp.h>
+
 
 namespace E=Eigen;
 
+static void testeverything(){
+  //Load problem data
+  OSQPFloat P_x[3] = { 4.0, 1.0, 2.0, };
+  OSQPInt   P_nnz  = 3;
+  OSQPInt   P_i[3] = { 0, 0, 1, };
+  OSQPInt   P_p[3] = { 0, 1, 3, };
+  OSQPFloat q[2]   = { 1.0, 1.0, };
+  OSQPFloat A_x[4] = { 1.0, 1.0, 1.0, 1.0, };
+  OSQPInt   A_nnz  = 4;
+  OSQPInt   A_i[4] = { 0, 1, 0, 2, };
+  OSQPInt   A_p[3] = { 0, 2, 4, };
+  OSQPFloat l[3]   = { 1.0, 0.0, 0.0, };
+  OSQPFloat u[3]   = { 1.0, 0.7, 0.7, };
+  OSQPInt   n = 2;
+  OSQPInt   m = 3;
+
+  //Exitflag
+  OSQPInt exitflag;
+
+  //Solver, settings, matrices
+  OSQPSolver*   solver   = NULL;
+  OSQPSettings* settings = NULL;
+  OSQPCscMatrix* P =(OSQPCscMatrix*)malloc(sizeof(OSQPCscMatrix));
+  OSQPCscMatrix* A = (OSQPCscMatrix*)malloc(sizeof(OSQPCscMatrix));
+
+  // Populate matrices
+  csc_set_data(A, m, n, A_nnz, A_x, A_i, A_p);
+  csc_set_data(P, n, n, P_nnz, P_x, P_i, P_p);
+
+  // Set default settings 
+  settings = (OSQPSettings *)malloc(sizeof(OSQPSettings));
+  if (settings) {
+    osqp_set_default_settings(settings);
+    settings->polishing = 1;
+
+    //settings->linsys_solver = OSQP_DIRECT_SOLVER;
+    //settings->linsys_solver = OSQP_INDIRECT_SOLVER;
+  }
+
+  OSQPInt cap = osqp_capabilities();
+
+  printf("This OSQP library supports:\n");
+  if(cap & OSQP_CAPABILITY_DIRECT_SOLVER) {
+    printf("    A direct linear algebra solver\n");
+  }
+  if(cap & OSQP_CAPABILITY_INDIRECT_SOLVER) {
+    printf("    An indirect linear algebra solver\n");
+  }
+  if(cap & OSQP_CAPABILITY_CODEGEN) {
+    printf("    Code generation\n");
+  }
+  if(cap & OSQP_CAPABILITY_DERIVATIVES) {
+    printf("    Derivatives calculation\n");
+  }
+  printf("\n");
+
+  // Setup solver
+  exitflag = osqp_setup(&solver, P, q, A, l, u, m, n, settings);
+
+  // Solve problem 
+  if (!exitflag) exitflag = osqp_solve(solver);
+
+  // Cleanup 
+  osqp_cleanup(solver);
+  if (A) free(A);
+  if (P) free(P);
+  if (settings) free(settings);
+
+}
 
 int main(int argc,char* argv[]){
   SVM2ClassConfig config;
-  config.store_path="../data/SVM_models/test_model";
+  config.store_path="../data/SVM_models/linear_model";
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.training_size=5000;
-  config.test_size=1000;
+  config.training_size=40000;
+  config.test_size=10000;
   config.class1_id=0;
   config.class2_id=2;
-  config.C_list={0.05,0.1,0.5,1,5,10,50,100};
+  //config.C_list={1e-3,5e-3,1e-2,1e-1,1,5,10,50,100,1000};
+  config.C_list={0.1,1,2,5,10,100};
   config.kernel_parameters.poly_c=1;
   config.kernel_parameters.poly_d=2;
   config.kernel_parameters.rbf_sigma=0.1;
-  config.kernel_type=RBF;
+  config.kernel_type=LINEAR;
   configureFromArguments(argc,argv,config);
   std::cout<<"Configuration done"<<std::endl;
 
   EventTimer et;
   et.start("Script total time");
 
+  //mkl_set_num_threads_local(8);
+  //std::cout<<"Threads: "<<mkl_get_max_threads()<<std::endl;
 
   Cifar10Handler c10=Cifar10Handler(config.dataset_path);
   SampleMatrix training_set=c10.getTrainingMatrix(config.training_size);
@@ -40,12 +116,14 @@ int main(int argc,char* argv[]){
 
   normalizeSet(training_set);
   normalizeSet(test_set);
+  //return (int)exitflag;
 
 
   SampleMatrix train_1v1=extract1v1Dataset(training_set,
                                            config.class1_id,config.class2_id);
   SampleMatrix test_1v1=extract1v1Dataset(test_set,
                                           config.class1_id,config.class2_id);
+
   /**
   training_set.vectors.resize(0,0);
   training_set.labels.resize(0);
@@ -109,6 +187,7 @@ int main(int argc,char* argv[]){
     if(test_accuracy>best_accuracy){
       svm.storeToFile();
     }
+    svm.clearSolution();
 
     svm.displayCurrentIntervals();
     svm.storeEventsToFile();

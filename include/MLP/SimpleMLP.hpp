@@ -54,7 +54,7 @@ public:
 
   // Classic methods
   void forwardPass(const MatrixXf& input);
-  void getHingeLoss(const VectorXi& labels);
+  float getHingeLoss(const VectorXi& labels);
   void backwardPass(const MatrixXf& input,
                     const VectorXi& labels);
 

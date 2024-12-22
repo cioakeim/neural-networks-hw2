@@ -1,6 +1,12 @@
 #ifndef KERNELS_HPP
 #define KERNELS_HPP
 
+#ifndef EIGEN_USE_BLAS
+#define EIGEN_USE_BLAS
+#endif
+#ifndef EIGEN_USE_LAPACK
+#define EIGEN_USE_LAPACK
+#endif
 #include <Eigen/Dense>
 
 namespace E=Eigen;

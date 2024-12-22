@@ -1,6 +1,12 @@
 #ifndef SVM_HPP
 #define SVM_HPP
 
+#ifndef EIGEN_USE_BLAS
+#define EIGEN_USE_BLAS
+#endif
+#ifndef EIGEN_USE_LAPACK
+#define EIGEN_USE_LAPACK
+#endif
 #include <functional>
 #include <osqp/osqp.h>
 #include "CommonLib/basicStructs.hpp"
@@ -25,23 +31,23 @@ private:
   std::function<E::MatrixXf(const E::MatrixXf&,const E::MatrixXf&,KernelParameters)> kernel; //< K(x_i,x_j)
   KernelParameters kernel_parameters;
   float C; //< Parameter for slack variables
-  const float lagrange_pruning_threshold=1e-3; //< For finding non-zero lagrange scalars
+  const float lagrange_pruning_threshold=1e-6; //< For finding non-zero lagrange scalars
   const float kernel_matrix_pruning_threshold=1e-6; //< For pruning kernel elements
 
   // Solver variables
   OSQPSolver* solver;
   // Cost function data
-  OSQPCscMatrix P; //< Upper-triangular of Quadratic matrix
+  OSQPCscMatrix* P; //< Upper-triangular of Quadratic matrix
   OSQPFloat* q; //< Linear term of cost
   // Constraints (l<Ax<u)
-  OSQPCscMatrix A; //< Contraint matrix
+  OSQPCscMatrix* A; //< Contraint matrix
   OSQPFloat* l; //< Lower bound
   OSQPFloat* u; //< Upper bound
   // Dimensions of problem
   const OSQPInt m; //< Number of contraints
   const OSQPInt n; //< Number of variables
   // Solver settings 
-  OSQPSettings settings;
+  OSQPSettings* settings;
   
   // The results of training
   E::VectorXf lagrange_times_labels; //< Each element is a_i*y_i for usage.

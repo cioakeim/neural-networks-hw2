@@ -10,7 +10,10 @@ file(GLOB COMMON_LIB_SRC "${PROJECT_SOURCE_DIR}/src/CommonLib/*.cpp")
 add_library(common_lib STATIC ${COMMON_LIB_SRC})
 target_compile_options(common_lib PUBLIC -O3 -ffast-math -Wall -Wextra)
 target_include_directories(common_lib PUBLIC "${PROJECT_SOURCE_DIR}/include/CommonLib")
-target_link_libraries(common_lib PUBLIC ${BLAS_LIBRARIES})
 target_link_libraries(common_lib PUBLIC OpenMP::OpenMP_CXX)
 #target_link_libraries(common_lib PUBLIC ${OpenCV_LIBS})
+target_link_libraries(common_lib PUBLIC ${AOCL_BLAS_LIB})
+target_link_libraries(common_lib PUBLIC ${AOCL_LAPACK_LIB})
+
+
 

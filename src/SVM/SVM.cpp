@@ -1,3 +1,9 @@
+#ifndef EIGEN_USE_BLAS
+#define EIGEN_USE_BLAS
+#endif
+#ifndef EIGEN_USE_LAPACK
+#define EIGEN_USE_LAPACK
+#endif
 #include "SVM/SVM.hpp"
 #include <osqp/osqp_api_constants.h>
 #include <osqp/osqp_api_functions.h>
@@ -8,6 +14,7 @@
 #include "CommonLib/basicFuncs.hpp"
 #include "omp.h"
 #include "CommonLib/eventTimer.hpp"
+#include <cstdlib>
 
 
 static void setOSQPMatrixToNull(OSQPCscMatrix& mat){
@@ -20,16 +27,17 @@ static void setOSQPMatrixToNull(OSQPCscMatrix& mat){
 }
 
 
-static void freeOSQPMatrix(OSQPCscMatrix& mat){
-  if(mat.x!=nullptr){
-    delete[] mat.x;
+static void freeOSQPMatrix(OSQPCscMatrix* mat){
+  if(mat->x!=nullptr){
+    free(mat->x);
   }
-  if(mat.i!=nullptr){
-    delete[] mat.i;
+  if(mat->i!=nullptr){
+    free(mat->i);
   }
-  if(mat.p!=nullptr){
-    delete[] mat.p;
+  if(mat->p!=nullptr){
+    free(mat->p);
   }
+  free(mat);
 }
 
 
@@ -45,9 +53,9 @@ SVM::SVM(SampleMatrix& training_set,SampleMatrix& test_set):
   this->training_set=training_set;
   this->test_set=test_set;
   solver=nullptr;
-  setOSQPMatrixToNull(P);
+  P=nullptr;
   q=nullptr;
-  setOSQPMatrixToNull(A);
+  A=nullptr;
   l=u=nullptr;
 
 };
@@ -65,24 +73,31 @@ SVM::SVM(const E::MatrixXf& class_1_train,
   n(class_1_train.cols()+class_2_train.cols()){
   // Init pointers to null for safety.
   solver=nullptr;
-  setOSQPMatrixToNull(P);
+  P=nullptr;
   q=nullptr;
-  setOSQPMatrixToNull(A);
+  A=nullptr;
   l=u=nullptr;
 }
 
 
 SVM::~SVM(){
-  freeOSQPMatrix(P);
-  if(q!=nullptr){
-    delete[] q;
+  if(A!=nullptr){
+    freeOSQPMatrix(A);
   }
-  freeOSQPMatrix(A);
+  if(q!=nullptr){
+    free(q);
+  }
+  if(P!=nullptr){
+    freeOSQPMatrix(P);
+  }
   if(l!=nullptr){
-    delete[] l;
+    free(l);
   }
   if(u!=nullptr){
-    delete[] u;
+    free(u);
+  }
+  if(settings!=nullptr){
+    free(settings);
   }
 }
 
@@ -146,9 +161,10 @@ void SVM::clearSolution(){
 }
 
 
-static void eigenDenseToOSQPSparse(const E::MatrixXf& eigen,OSQPCscMatrix& osqp){
-  E::SparseMatrix<float> sparse=eigen.sparseView();
+static void eigenDenseToOSQPSparse(const E::MatrixXd& eigen,OSQPCscMatrix** osqp){
+  E::SparseMatrix<double> sparse=eigen.sparseView();
   // Set matrix dimensions
+  /**
   osqp.m=sparse.rows();
   osqp.n=sparse.cols();
   // Allocate memory
@@ -156,36 +172,178 @@ static void eigenDenseToOSQPSparse(const E::MatrixXf& eigen,OSQPCscMatrix& osqp)
   osqp.p=new OSQPInt[osqp.n+1];
   osqp.i=new OSQPInt[osqp.nzmax];
   osqp.x=new OSQPFloat[osqp.nzmax];
+  */
+  OSQPInt m=sparse.rows();
+  OSQPInt n=sparse.cols();
+  // Allocate memory
+  OSQPInt nzmax=sparse.nonZeros();
+  //std::cout<<"nzmax: "<<nzmax<<std::endl;
+  *osqp=(OSQPCscMatrix*)malloc(sizeof(OSQPCscMatrix));
+  OSQPInt *p=(OSQPInt*)malloc((n+1)*sizeof(OSQPInt));
+  OSQPInt *i=(OSQPInt*)malloc(nzmax*sizeof(OSQPInt));
+  OSQPFloat *x=(OSQPFloat*)malloc(nzmax*sizeof(OSQPFloat));
   // Copy
+  for(int l=0;l<n+1;l++){
+    p[l]=sparse.outerIndexPtr()[l];
+  }
+  for(int l=0;l<nzmax;l++){
+    i[l]=sparse.innerIndexPtr()[l];
+    x[l]=sparse.valuePtr()[l];
+  }
+  /**
+  std::copy(sparse.outerIndexPtr(),sparse.outerIndexPtr()+n+1,p);
+  std::copy(sparse.innerIndexPtr(),sparse.innerIndexPtr()+nzmax,i);
+  std::copy(sparse.valuePtr(),sparse.valuePtr()+nzmax,x);
+  */
+  csc_set_data(*osqp, m, n, nzmax, x, i, p);
+  /**
+  std::cout<<"C: with nzmax:"<<(*osqp)->nzmax<<std::endl;
+  for(int i=0;i<n+1;i++){
+    std::cout<<(*osqp)->p[i]<<std::endl;
+    if((*osqp)->p[i]==nzmax)    
+      break;
+  }
+  for(int i=0;i<nzmax;i++){
+    std::cout<<(*osqp)->i[i]<<", "<<(*osqp)->x[i]<<std::endl;
+  }
+  */
+  /*
   std::copy(sparse.outerIndexPtr(),sparse.outerIndexPtr()+osqp.n+1,osqp.p);
   std::copy(sparse.innerIndexPtr(),sparse.innerIndexPtr()+osqp.nzmax,osqp.i);
   std::copy(sparse.valuePtr(),sparse.valuePtr()+osqp.nzmax,osqp.x);
+  */
+}
+
+static void testeverything(){
+  OSQPFloat P_x[3] = { 4.0, 1.0, 2.0, };
+  OSQPInt   P_nnz  = 3;
+  OSQPInt   P_i[3] = { 0, 0, 1, };
+  OSQPInt   P_p[3] = { 0, 1, 3, };
+  OSQPFloat q[2]   = { 1.0, 1.0, };
+  OSQPFloat A_x[4] = { 1.0, 1.0, 1.0, 1.0, };
+  OSQPInt   A_nnz  = 4;
+  OSQPInt   A_i[4] = { 0, 1, 0, 2, };
+  OSQPInt   A_p[3] = { 0, 2, 4, };
+  OSQPFloat l[3]   = { 1.0, 0.0, 0.0, };
+  OSQPFloat u[3]   = { 1.0, 0.7, 0.7, };
+  OSQPInt   n = 2;
+  OSQPInt   m = 3;
+
+  //Exitflag
+  OSQPInt exitflag;
+
+  //Solver, settings, matrices
+  OSQPSolver*   t_solver   = NULL;
+  OSQPSettings* t_settings = NULL;
+  OSQPCscMatrix* t_P =(OSQPCscMatrix*)malloc(sizeof(OSQPCscMatrix));
+  OSQPCscMatrix* t_A = (OSQPCscMatrix*)malloc(sizeof(OSQPCscMatrix));
+
+  // Populate matrices
+  csc_set_data(t_A, m, n, A_nnz, A_x, A_i, A_p);
+  csc_set_data(t_P, n, n, P_nnz, P_x, P_i, P_p);
+
+  // Set default settings 
+  t_settings = (OSQPSettings *)malloc(sizeof(OSQPSettings));
+  if (t_settings) {
+    osqp_set_default_settings(t_settings);
+    t_settings->polishing = 1;
+
+    //settings->linsys_solver = OSQP_DIRECT_SOLVER;
+    //settings->linsys_solver = OSQP_INDIRECT_SOLVER;
+  }
+
+  OSQPInt cap = osqp_capabilities();
+
+  printf("This OSQP library supports:\n");
+  if(cap & OSQP_CAPABILITY_DIRECT_SOLVER) {
+    printf("    A direct linear algebra solver\n");
+  }
+  if(cap & OSQP_CAPABILITY_INDIRECT_SOLVER) {
+    printf("    An indirect linear algebra solver\n");
+  }
+  if(cap & OSQP_CAPABILITY_CODEGEN) {
+    printf("    Code generation\n");
+  }
+  if(cap & OSQP_CAPABILITY_DERIVATIVES) {
+    printf("    Derivatives calculation\n");
+  }
+  printf("\n");
+
+  // Setup solver
+  exitflag = osqp_setup(&t_solver, t_P, q, t_A, l, u, m, n, t_settings);
+
+  // Solve problem 
+  if (!exitflag) exitflag = osqp_solve(t_solver);
+
+  // Cleanup 
+  osqp_cleanup(t_solver);
+  if (t_A) free(t_A);
+  if (t_P) free(t_P);
+  if (t_settings) free(t_settings);
 }
 
 
 void SVM::computeKernelMatrix(){
+  std::cout<<"Size of float: "<<sizeof(OSQPFloat)<<std::endl;
   // Compute dense kernel.
   //std::cout<<"Calling kernel"<<std::endl;
-  const E::MatrixXf denseKernel=kernel(training_set.vectors,
-                                       training_set.vectors,
-                                       kernel_parameters);
+  E::MatrixXd denseKernel=kernel(training_set.vectors,
+                                 training_set.vectors,
+                                 kernel_parameters).cast<double>();
+  
   //std::cout<<"Called kernel"<<std::endl;
-  const E::MatrixXf Y=0.5*(training_set.labels*training_set.labels.transpose()).cast<float>();
-  E::MatrixXf triang=denseKernel.cwiseProduct(Y.cast<float>()).triangularView<E::Upper>();
+  const E::MatrixXd Y=(training_set.labels*training_set.labels.transpose()).cast<double>();
+
+
+  E::MatrixXd mat=denseKernel.cwiseProduct(Y.cast<double>());
+  //std::cout<<"Mat:\n"<<mat<<std::endl;
+
+  /**
+  const int size=mat.cols();
+  for(int i=0;i<size*size;i++){
+    if(abs(mat.array()(i))<kernel_matrix_pruning_threshold){
+      mat.array()(i)=0;
+    }
+  }
+  */
+
+  if (!mat.isApprox(mat.transpose(), 1e-6)) {
+    std::cout << "Matrix is not symmetric due to precision issues" << std::endl;
+  }
+
+
+  /**
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(mat);
+  std::cout << "Minimum eigenvalue: " << solver.eigenvalues().minCoeff() << std::endl;
+  */
+
+  std::cout<<"Max coeff: "<<mat.maxCoeff()<<std::endl;
+  std::cout<<"Min abs coeff: "<<mat.cwiseAbs().minCoeff()<<std::endl;
+
+  /**
+  const int row=mat.rows();
+  for(int i=0;i<row;i++){
+    E::MatrixXf sub=mat.topLeftCorner(i,i);
+    if(mat.determinant()<0){
+      std::cout<<"NON CONVEX"<<std::endl;
+    }
+  }
+  */
+
+  E::MatrixXd triang=mat.triangularView<E::Upper>();
+  //E::MatrixXf triang=denseKernel.cwiseProduct(Y.cast<float>()).triangularView<E::Upper>();
   triang=triang.array()/triang.maxCoeff();
 
 
-  //std::cout<<denseKernel.rows()<<std::endl;
-  // Convert to sparse
-  const E::SparseMatrix<float> sparse=triang.sparseView();
-  //std::cout<<"K: \n"<<sparse<<std::endl;
 
-  eigenDenseToOSQPSparse(triang,P);
+  //std::cout<<"Triang:\n"<<triang<<std::endl;
+  //std::cout<<"Check"<<std::endl;
+  eigenDenseToOSQPSparse(triang,&P);
 }
 
 
 void SVM::configLinearCostTerm(){
-  q=new OSQPFloat[this->n]; 
+  q=(OSQPFloat*) malloc(n*sizeof(OSQPFloat)); 
   const int size=n;
   #pragma omp parallel for
   for(int i=0;i<size;i++){
@@ -196,31 +354,49 @@ void SVM::configLinearCostTerm(){
 
 void SVM::configConstraints(){
   // Compute dense constraint matrix
-  E::MatrixXf dense_constraint(n+1,n);
-  dense_constraint.row(0)=training_set.labels.cast<float>().transpose();
-  dense_constraint.block(1,0,n,n)=E::MatrixXf::Identity(n,n);
+  E::MatrixXd dense_constraint(n+1,n);
+  dense_constraint.row(0)=training_set.labels.cast<double>().transpose();
+  dense_constraint.block(1,0,n,n)=E::MatrixXd::Identity(n,n);
   // Convert to Islam
-  eigenDenseToOSQPSparse(dense_constraint,A);
+  eigenDenseToOSQPSparse(dense_constraint,&A);
   // Lower bound is all zeros
-  l=new OSQPFloat[m]();
-  u=new OSQPFloat[m];
+  l=(OSQPFloat*)calloc(m,sizeof(OSQPFloat));
+  u=(OSQPFloat*)malloc(m*sizeof(OSQPFloat));
   u[0]=0;
   std::fill(u+1,u+m,C);
   //std::cout<<dense_constraint<<std::endl;
+  /**
+  for(int i=0;i<n;i++){
+    std::cout<<l[i]<<" "<<u[i]<<std::endl;
+  }
+  */
 }
 
 
 void SVM::solveQuadraticProblem(){
+  solver=(OSQPSolver*)malloc(sizeof(OSQPSolver));
+  settings=(OSQPSettings*)malloc(sizeof(OSQPSettings));
   // Default setup
-  osqp_set_default_settings(&settings);
-  settings.eps_abs=1e-8;
-  settings.eps_rel=1e-8;
+  osqp_set_default_settings(settings);
+  settings->linsys_solver=OSQP_INDIRECT_SOLVER;
+  settings->polishing=true;
+  //settings->linsys_solver=OSQP_DIRECT_SOLVER;
+  omp_set_num_threads(8);
+  setenv("MKL_DOMAIN_NUM_THREADS", "8", 1);
+  //mkl_set_num_threads_local(8);
+  settings->eps_abs=1e-8;
+  settings->eps_rel=1e-8;
+
+  
+  
   int code;
-  code=osqp_setup(&solver,&P,q,&A,l,u,m,n,&settings);
+  std::cout<<"Setup.."<<std::endl;
+  code=osqp_setup(&solver,P,q,A,l,u,m,n,settings);
   if(code!=0){
-    std::cerr<<"Error.."<<std::endl;
+    std::cerr<<"Error..: "<<osqp_error_message(code)<<std::endl;
   }
   // Actual solution
+  std::cout<<"Solving.."<<std::endl;
   code=osqp_solve(solver);
   if(code!=0){
     std::cerr<<"Error in qsolve.."<<std::endl;
@@ -232,8 +408,9 @@ void SVM::storeSupportVectors(){
   const float C_eps=(C<1)?1e-9*C:1e-9;
   const float eff_pruning=(C<1)?lagrange_pruning_threshold*C:lagrange_pruning_threshold;
   // Extract all lagrange multipliers
-  E::VectorXf a(n);
+  E::VectorXd a(n);
   std::copy(solver->solution->x,solver->solution->x+n,a.data()); 
+  //std::cout<<"A:\n"<<a<<std::endl;
   osqp_cleanup(solver);
 
   if(a.array().isNaN().sum()>0){
@@ -253,6 +430,10 @@ void SVM::storeSupportVectors(){
   std::vector<int> msv_idx;
   if(sv_nz==0){
     std::cerr<<"No support vectors found.. Exiting.."<<std::endl;
+    exit(1);
+  }
+  if(msv_nz==0){
+    std::cerr<<"No margin support vectors found.. Exiting"<<std::endl;
     exit(1);
   }
 

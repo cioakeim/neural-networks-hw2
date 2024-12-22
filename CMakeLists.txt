@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(NeuralNetworksProject1 VERSION 1.0 LANGUAGES CXX)
+project(NeuralNetworksProject2 VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_SOURCE_DIR}/third-party/eigen-3.4.0)
 
-set(BLAS_LIBRARIES "/home/chris/aocl/5.0.0/aocc/lib/libblis.so" CACHE PATH "BLAS")
-
+set(AOCL_BLAS_LIB "/home/chris/aocl/5.0.0/aocc/lib/libblis-mt.so" CACHE PATH "BLAS")
+set(AOCL_LAPACK_LIB "/home/chris/aocl/5.0.0/aocc/lib/libflame.so" CACHE PATH "LAPACK")
+set(ENABLE_MULTITHREADING ON CACHE STRING "MT")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/CommonLib")
 add_subdirectory("${PROJECT_SOURCE_DIR}/src/MLP")
