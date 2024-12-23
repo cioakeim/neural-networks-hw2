@@ -89,8 +89,10 @@ void configureFromArguments(int argc,char* argv[],
   config.dataset_path=args[z++];
   config.training_size=stringToInt(args[z++]);
   config.test_size=stringToInt(args[z++]);
-  config.class1_id=stringToInt(args[z++]);
-  config.class2_id=stringToInt(args[z++]);
+  if(config.training_type==OneVsOne){
+    config.class1_id=stringToInt(args[z++]);
+    config.class2_id=stringToInt(args[z++]);
+  }
   config.C_list=commaSeparatedToVector(args[z++]);
   // For kernel type:
   if(args[z]=="LINEAR"){
@@ -126,5 +128,6 @@ void storeConfigInfo(const SVM2ClassConfig& config,
     "\nD: "<<config.kernel_parameters.poly_d<<
     "\nC: "<<config.kernel_parameters.poly_c<<
     "\nSigma: "<<config.kernel_parameters.rbf_sigma<<"\n";
+  file<<((config.training_size==OneVsOne)?"\n1v1 Training":"MultiClass Training");
   file.close(); 
 }

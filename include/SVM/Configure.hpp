@@ -6,6 +6,7 @@
 #include "SVM/Kernels.hpp"
 
 enum KernelType{LINEAR,POLY,RBF};
+enum TrainingType{OneVsOne,MultiClass};
 
 /**
  * @brief Full config for experiment run.
@@ -21,6 +22,7 @@ struct SVM2ClassConfig{
   int training_size;
   int test_size;
 
+  TrainingType training_type;
   // Classes chosen
   int class1_id;
   int class2_id;

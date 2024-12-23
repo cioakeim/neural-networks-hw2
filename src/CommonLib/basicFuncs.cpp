@@ -126,6 +126,33 @@ SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
   return result;  
 }
 
+static void NaNcheck(const E::MatrixXf& mat,std::string label){
+  if(mat.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<label<<std::endl;
+    exit(1);
+  }
+}
 
-SampleMatrix extract1vAllDataset(const SampleMatrix& full_dataset,
-                                 int class_id);
+std::vector<E::MatrixXf> splitDataset(const SampleMatrix& set,int class_number){
+  std::vector<std::vector<int>> class_idx(class_number);
+  const int sample_size=set.labels.size();
+  const int feature_size=set.vectors.rows();
+  // Map indices to index vectors
+  for(int i=0;i<sample_size;i++){
+    class_idx[set.labels(i)].push_back(i);
+  }
+  // Allocate memory for matrices
+  std::vector<E::MatrixXf> result;
+  for(int i=0;i<class_number;i++){
+    result.emplace_back(feature_size,class_idx[i].size());
+  }
+  for(int i=0;i<class_number;i++){
+    const int class_samples=class_idx[i].size();
+    for(int j=0;j<class_samples;j++){
+      result[i].col(j)=set.vectors.col(class_idx[i][j]);
+    }
+  }
+  return result;
+}
+
+

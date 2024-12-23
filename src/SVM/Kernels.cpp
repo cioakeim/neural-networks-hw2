@@ -19,12 +19,6 @@ E::MatrixXf rbf_kernel(const E::MatrixXf& a, const E:: MatrixXf& b,
   E::MatrixXf result(a.cols(),b.cols());
   const int size_1=a.cols();
   const int size_2=b.cols();
-  /**
-  for(int i=0;i<size;i++){
-    result.row(i)=(((b.colwise()-a.col(i)).colwise().norm()).array()*param.rbf_gamma).exp();
-    std::cout<<"size "<<result.row(i).size()<<std::endl;
-  }
-  **/
   const float feature_size=a.rows();
   const float sigma=param.rbf_sigma*std::sqrt(feature_size);
   const float gamma=0.5*(1/(sigma*sigma));

@@ -89,6 +89,7 @@ public:
 
   const SampleMatrix& getTrainingSetRef(){return training_set;}
   const SampleMatrix& getTestSetRef(){return test_set;}
+  int getSVCount(){return support_vectors.cols();}
 
   // Store the solution
   void storeToFile();
@@ -118,6 +119,9 @@ public:
   E::VectorXf output(const E::MatrixXf& samples);
 
   E::VectorXi predictSet(const E::VectorXf& output);
+
+  float getHingeLoss(const E::VectorXf& output,
+                     const E::VectorXi& labels);
 
   void testOnSet(const SampleMatrix& set,
                  float& accuracy,

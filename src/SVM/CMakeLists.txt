@@ -3,17 +3,9 @@
 
 option(OSQP_MANUAL_LINK "Set to On if OSQP isn't in default location" OFF)
 
-set(MY_OSQP_LIBROOT /home/c/cioakeim/osqp/)
 
 find_package(MKL REQUIRED)
-
-
-if(OSQP_MANUAL_LINK)
-  include_directories(${MY_OSQP_LIBROOT}/include) 
-  link_directories(${MY_OSQP_LIBROOT}/lib64)
-else()
-  find_package(osqp REQUIRED)
-endif()
+find_package(osqp REQUIRED)
 
 
 include_directories(${MY_HOME_DIR}/my_libroot/include)
@@ -27,9 +19,4 @@ target_link_libraries(svm_lib PUBLIC common_lib)
 target_link_libraries(svm_lib PUBLIC MKL::MKL)
 #target_link_libraries(svm_lib PUBLIC ${AOCL_BLAS_LIB})
 #target_link_libraries(svm_lib PUBLIC ${AOCL_LAPACK_LIB})
-if(OSQP_MANUAL_LINK)
-  target_include_directories(svm_lib PUBLIC ${OSQP_LIBROOT}/include)
-  target_link_libraries(svm_lib PUBLIC ${OSQP_LIBROOT}/lib64/libosqp.so)
-else()
-  target_link_libraries(svm_lib PUBLIC osqp::osqp)
-endif()
+target_link_libraries(svm_lib PUBLIC osqp::osqp)

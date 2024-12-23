@@ -42,5 +42,7 @@ SampleMatrix extract1v1Dataset(const SampleMatrix& full_dataset,
 SampleMatrix extract1vAllDataset(const SampleMatrix& full_dataset,
                                  int class_id);
 
+std::vector<E::MatrixXf> splitDataset(const SampleMatrix& set,int class_number);
+
 
 #endif

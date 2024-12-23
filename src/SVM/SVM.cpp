@@ -49,7 +49,6 @@ SVM::SVM(SampleMatrix& training_set,SampleMatrix& test_set):
   m(1+training_set.vectors.cols()),
   n(training_set.vectors.cols()){
   // Set all matrix pointers to 0
-  std::cout<<"INIT"<<std::endl;
   this->training_set=training_set;
   this->test_set=test_set;
   solver=nullptr;
@@ -60,6 +59,12 @@ SVM::SVM(SampleMatrix& training_set,SampleMatrix& test_set):
 
 };
 
+static void NaNcheck(const E::MatrixXf& mat,std::string label){
+  if(mat.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<label<<std::endl;
+    exit(1);
+  }
+}
 
 SVM::SVM(const E::MatrixXf& class_1_train,
          const E::MatrixXf& class_1_test,
@@ -105,8 +110,20 @@ SVM::~SVM(){
 static SampleMatrix matricesToSampleMatrix(const E::MatrixXf& class_1,
                                            const E::MatrixXf& class_2){
   SampleMatrix result;
+  if(class_1.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<"Error in class_1!!!"<<std::endl;
+    exit(1);
+  }
+  if(class_2.array().isNaN().sum()>0){
+    std::cerr<<"Error in class_2!!!"<<std::endl;
+    exit(1);
+  }
   result.vectors=E::MatrixXf(class_1.rows(),class_1.cols()+class_2.cols());
   result.vectors<<class_1,class_2;
+  if(result.vectors.array().isNaN().sum()>0){
+    std::cerr<<"Error in vectors!!!"<<std::endl;
+    exit(1);
+  }
   // +1 if for class 1, -1 is for class 2 
   result.labels=E::VectorXi(class_1.cols()+class_2.cols());
   result.labels<<E::VectorXi::Ones(class_1.cols()),-E::VectorXi::Ones(class_2.cols());
@@ -142,8 +159,24 @@ void SVM::loadFromFile(){
 
 
 void SVM::constructDatasetFromClassSets(){
+  if(class_1_train.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<"Bad class_1_train"<<std::endl;
+    exit(1);
+  }
+  if(class_2_train.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<"Bad class_2_train"<<std::endl;
+    exit(1);
+  }
+  std::cout<<"Constructing:"<<std::endl;
   training_set=matricesToSampleMatrix(class_1_train,class_2_train);
+  if(training_set.vectors.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<"Error in training set creation..."<<std::endl;
+  }
   test_set=matricesToSampleMatrix(class_1_test,class_2_test);
+  if(test_set.vectors.array().isNaN().cast<int>().sum()>0){
+    std::cerr<<"Error in test set creation..."<<std::endl;
+  }
+  std::cout<<"Constructed"<<std::endl;
 }
 
 
@@ -384,8 +417,8 @@ void SVM::solveQuadraticProblem(){
   omp_set_num_threads(8);
   setenv("MKL_DOMAIN_NUM_THREADS", "8", 1);
   //mkl_set_num_threads_local(8);
-  settings->eps_abs=1e-6;
-  settings->eps_rel=1e-6;
+  settings->eps_abs=1e-8;
+  settings->eps_rel=1e-8;
 
   
   
@@ -506,6 +539,10 @@ E::VectorXi SVM::predictSet(const E::VectorXf& output){
   return (2*((output.array()).array()>0).cast<float>()-1).cast<int>();
 }
 
+float SVM::getHingeLoss(const E::VectorXf& output,
+                        const E::VectorXi& labels){
+  return (1-(labels.array()).cast<float>()*output.array()).cwiseMax(0).mean();
+}
 
 void SVM::testOnSet(const SampleMatrix& set,
                     float& accuracy,

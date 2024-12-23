@@ -40,6 +40,10 @@ public:
     return two_class_svms[pair_to_svm_lut[class_1_idx][class_2_idx]];
   }
 
+  const SampleMatrix& getTrainingSetRef(){return this->training_set;}
+  const SampleMatrix& getTestSetRef(){return this->test_set;}
+  int getTotalSVCount();
+
   void storeSVM();
   void loadSVM();
 
@@ -52,14 +56,12 @@ public:
 
   void trainTwoClassSVM(int class_1_idx,int class_2_idx);
 
-  void testTwoClassSVM(int class_1_idx,int class_2_idx,
-                       const SampleMatrix& test_set,
-                       float& accuracy,
-                       float& mean_hinge_loss);
+  // Since hinge loss doesn't make sense on the testing phase, calculate here
+  void trainAllSVMs(float& train_hinge_loss,
+                    float& test_hinge_loss);
 
-
-
-  void trainAllSVMs();
+  void testOnSet(const SampleMatrix& set,
+                 float& accuracy);
 };
 
 

@@ -16,6 +16,7 @@ namespace E=Eigen;
 
 int main(int argc,char* argv[]){
   SVM2ClassConfig config;
+  config.training_type=OneVsOne;
   config.store_path="../data/SVM_models/linear_model";
   config.dataset_path="../data/cifar-10-batches-bin";
   config.training_size=30000;
