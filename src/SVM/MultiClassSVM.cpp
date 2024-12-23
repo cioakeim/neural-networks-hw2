@@ -217,7 +217,6 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
       final_prediction(sample_idx)=winner_idx[0];
       continue;
     }
-    std::cout<<"TIE"<<std::endl;
     // In case of tie
     float max_confidence=0;
     int final_idx=0;

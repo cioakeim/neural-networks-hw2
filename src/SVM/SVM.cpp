@@ -417,8 +417,8 @@ void SVM::solveQuadraticProblem(){
   omp_set_num_threads(8);
   setenv("MKL_DOMAIN_NUM_THREADS", "8", 1);
   //mkl_set_num_threads_local(8);
-  settings->eps_abs=1e-8;
-  settings->eps_rel=1e-8;
+  settings->eps_abs=1e-9;
+  settings->eps_rel=1e-9;
 
   
   
@@ -501,32 +501,18 @@ void SVM::storeSupportVectors(){
     support_vectors.col(i)=training_set.vectors.col(sv_idx[i]); 
     lagrange_times_labels(i)=a[sv_idx[i]]*training_set.labels[sv_idx[i]];
   }
+  // If even after that there are no SVs, no saving.
+  if(msv_nz==0){
+    std::cerr<<"No margin support vectors, assume b=0"<<std::endl;
+    b=0;
+    return;
+  }
   // MSV map
   for(int i=0;i<msv_nz;i++){
     msvs.col(i)=training_set.vectors.col(msv_idx[i]); 
     msv_labels(i)=training_set.labels[msv_idx[i]];
     msv_a_labels(i)=a[msv_idx[i]]*training_set.labels[msv_idx[i]];
   }
-  /**
-  int curr_col=0;
-  int curr_m_col=0;
-  for(int i=0;i<sv_nz;i++){
-    // If multiplier is posibive
-    if(a[i]>lagrange_pruning_threshold){
-      // Add to support vectors
-      support_vectors.col(curr_col)=training_set.vectors.col(i);
-      lagrange_times_labels(curr_col++)=a[i]*training_set.labels[i];
-      // If it's also <C 
-      if(a[i]<C-C_eps){
-        msvs.col(curr_m_col)=training_set.vectors.col(i);
-        msv_a_labels(curr_m_col)=a[i]*training_set.labels[i];
-        msv_labels(curr_m_col++)=training_set.labels[i];
-      }
-    } 
-  }
-  std::cout<<"Curr m vs size: "<<curr_m_col<<" "<<msvs.cols()<<std::endl;
-  std::cout<<"Curr  vs size: "<<curr_col<<" "<<support_vectors.cols()<<std::endl;
-  */
 
   std::cout<<"MSV NANS: "<<(msvs.array().isNaN().cast<int>().sum())<<std::endl;
   
