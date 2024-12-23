@@ -1,11 +1,12 @@
 #include "MLP/SimpleMLP.hpp"
+#include "CommonLib/basicFuncs.hpp"
 #include <random>
 
 SimpleMLP::SimpleMLP(const float learning_rate,
                      int input_size,
                      int batch_size,
-                     const SampleMatrix& training_set,
-                     const SampleMatrix& test_set):
+                     SampleMatrix& training_set,
+                     SampleMatrix& test_set):
   learning_rate(learning_rate),
   input_size(input_size),
   batch_size(batch_size),
@@ -49,14 +50,38 @@ float SimpleMLP::getHingeLoss(const VectorXi& labels){
 
 void SimpleMLP::backwardPass(const MatrixXf& input,
                              const VectorXi& labels){
-    
+  // Get local error 
+  delta=((1-(output.cwiseProduct(labels.cast<float>())).array()).array()>0).cast<float>();
+  const E::VectorXf temp=-labels.cast<float>().array()*activation_derivative(output).array();
+  delta.cwiseProduct(temp);
+
+  // Since no other layers update on the spot 
+  weights-=input*delta.transpose()*(learning_rate/batch_size);
+  bias(0,0)-=delta.mean()*learning_rate;
 }
 
 
-void runEpoch();
-void testOnSet(const SampleMatrix& set,
-               float& accuracy,
-               float& hinge_loss);
+void SimpleMLP::runEpoch(){
+  shuffleDatasetInPlace(training_set);
+  const int training_size=training_set.vectors.cols();
+  for(int idx=0;idx<training_size;idx+=batch_size){
+    const MatrixXf& input=training_set.vectors.middleCols(idx,batch_size);
+    const VectorXi& labels=training_set.labels.segment(idx,batch_size);
+    forwardPass(input);
+    backwardPass(input, labels);
+  }
+}
+
+
+
+void SimpleMLP::testOnSet(const SampleMatrix& set,
+                          float& accuracy,
+                          float& hinge_loss){
+  forwardPass(set.vectors);
+  E::VectorXi pred=2*((output.array()>0).cast<int>()).array()-1;
+  accuracy=(pred.array()==set.labels.array()).cast<float>().mean();
+  hinge_loss=getHingeLoss(set.labels);
+}
 
 void store();
 void load();

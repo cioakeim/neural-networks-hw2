@@ -22,4 +22,7 @@ float reLUder_el(const float in);
 E::VectorXf tanh(const E::VectorXf& in);
 E::VectorXf tanhder(const E::VectorXf& tanh_output);
 
+E::MatrixXf linear(const E::MatrixXf& in);
+E::MatrixXf linearder(const E::MatrixXf& out);
+
 #endif

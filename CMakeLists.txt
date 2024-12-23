@@ -52,6 +52,11 @@ target_link_libraries(testMultiSVM PRIVATE common_lib)
 target_link_libraries(testMultiSVM PRIVATE svm_lib)
 target_compile_options(testStoredModel PRIVATE -O3 -Wall -Wextra)
 
+add_executable(testSimpleMLP "${SCRIPTS}/testSimpleMLP.cpp")
+target_link_libraries(testSimpleMLP PRIVATE mlp_lib)
+target_link_libraries(testSimpleMLP PRIVATE common_lib)
+target_compile_options(testSimpleMLP PRIVATE -O3 -Wall -Wextra)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 
 

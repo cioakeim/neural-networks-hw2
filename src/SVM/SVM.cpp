@@ -438,8 +438,9 @@ void SVM::solveQuadraticProblem(){
 
 
 void SVM::storeSupportVectors(){
-  const float C_eps=(C<1)?1e-9*C:1e-9;
-  const float eff_pruning=(C<1)?lagrange_pruning_threshold*C:lagrange_pruning_threshold;
+  // Limits for float inequalities
+  float C_eps=(C<1)?1e-9*C:1e-9;
+  float eff_pruning=(C<1)?lagrange_pruning_threshold*C:lagrange_pruning_threshold;
   // Extract all lagrange multipliers
   E::VectorXd a(n);
   std::copy(solver->solution->x,solver->solution->x+n,a.data()); 
@@ -452,31 +453,39 @@ void SVM::storeSupportVectors(){
 
   // Filter support vectors (sv) and margin support vectors (msv)
   //
-  E::ArrayX<bool> a_is_sv= (a.array() > eff_pruning);
-  E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - C_eps));
-  E::ArrayX<bool> a_is_msv=(a_is_sv&&a_is_less_than_C);
-  // Get dimensions of both SV types
-
-  const int sv_nz=a_is_sv.cast<int>().sum();
+  bool found_msvs=false;
+  int sv_nz,msv_nz;
   std::vector<int> sv_idx;
-  const int msv_nz=a_is_msv.cast<int>().sum();
   std::vector<int> msv_idx;
-  if(sv_nz==0){
-    std::cerr<<"No support vectors found.. Exiting.."<<std::endl;
-    exit(1);
-  }
-  if(msv_nz==0){
-    std::cerr<<"No margin support vectors found.. Exiting"<<std::endl;
-    exit(1);
-  }
-
-  // Get indices of svs 
-  const int size=a.size();
-  for(int i=0;i<size;i++){
-    if(a_is_sv(i)==true)
-      sv_idx.push_back(i);
-    if(a_is_msv(i)==true)
-      msv_idx.push_back(i);
+  for(int i=0;i<100;i++){
+    // Get candidates for support vectors and margin support vectors
+    E::ArrayX<bool> a_is_sv= (a.array() > eff_pruning);
+    E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - C_eps));
+    E::ArrayX<bool> a_is_msv=(a_is_sv&&a_is_less_than_C);
+    sv_nz=a_is_sv.size();
+    msv_nz=a_is_msv.size();
+    // If no support vectors found, increase tolerance to small values
+    // and try again
+    if(sv_nz==0){
+      eff_pruning/=10;
+      continue;
+    }
+    // Same idea for margin support vectors
+    if(msv_nz==0){
+      C_eps/=10;
+      continue;
+    }
+    // If both vectors are non-zero, the solution is found
+    // Get indices of svs 
+    const int size=a.size();
+    for(int i=0;i<size;i++){
+      if(a_is_sv(i)==true)
+        sv_idx.push_back(i);
+      if(a_is_msv(i)==true)
+        msv_idx.push_back(i);
+    }
+    // And break
+    break;
   }
 
   // Allocate memory for stored vectors 

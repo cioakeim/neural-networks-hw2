@@ -25,6 +25,7 @@ void storeMatrixToFile(const std::string file_path,
 
 void normalizeSet(SampleMatrix& set);
 
+void shuffleDatasetInPlace(SampleMatrix& set);
 
 std::vector<int> stringToVector(std::string str);
 

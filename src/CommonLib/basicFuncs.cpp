@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <omp.h>
 
 namespace fs=std::filesystem;
@@ -69,6 +70,24 @@ void storeMatrixToFile(const std::string file_path,
   else{
     std::cerr<<"Error in storing: "<<file_path<<std::endl;
     exit(1);
+  }
+}
+
+
+void shuffleDatasetInPlace(SampleMatrix& set){
+  const int training_size=set.vectors.cols();
+  // Shuffle training set 
+   // Generate a random permutation of column indices
+  std::vector<int> indices(training_size);
+  std::iota(indices.begin(), indices.end(), 0);  // Fill indices with 0, 1, ..., cols-1
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::shuffle(indices.begin(), indices.end(), gen);
+  for(int i=0;i<training_size;i++){
+    set.vectors.col(i).swap(set.vectors.col(indices[i]));
+    int temp=set.labels[i];
+    set.labels[i]=set.labels(indices[i]);
+    set.labels[indices[i]]=temp;
   }
 }
 

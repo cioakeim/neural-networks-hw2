@@ -37,3 +37,13 @@ E::VectorXf tanh(const E::VectorXf& in){
 E::VectorXf tanhder(const E::VectorXf& tanh_output){
   return (1- tanh_output.array().square());
 }
+
+
+// Identity
+E::MatrixXf linear(const E::MatrixXf& in){
+  return in;
+}
+
+E::MatrixXf linearder(const E::MatrixXf& out){
+  return E::MatrixXf::Ones(out.rows(),out.cols());
+}

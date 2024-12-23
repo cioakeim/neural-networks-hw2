@@ -34,16 +34,16 @@ private:
   const int batch_size;
 
   // Dataset
-  const SampleMatrix& training_set;
-  const SampleMatrix& test_set;
+  SampleMatrix& training_set;
+  SampleMatrix& test_set;
 
   
 public:
   SimpleMLP(const float learning_rate,
             int input_size,
             int batch_size,
-            const SampleMatrix& training_set,
-            const SampleMatrix& test_set);
+            SampleMatrix& training_set,
+            SampleMatrix& test_set);
 
 
   void setStorePath(std::string path){this->store_path=path;}
