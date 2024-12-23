@@ -24,6 +24,7 @@ private:
   MatrixXf weights;
   VectorXf bias;
   MatrixXf output;
+  VectorXf delta;
   
   // Parameters
   VectorFunction activation_function;

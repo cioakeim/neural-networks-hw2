@@ -15,7 +15,7 @@ MY_HOME="/home/c/cioakeim"
 
 source $MY_HOME/intel/oneapi/mkl/latest/env/vars.sh lp64
 
-sigma_list=("1e-2","1e-1","2.5e-1","5e-1","7.5e-1","1","1.25","1.5","1.75","2")
+sigma_list=("1e-2" "1e-1" "2.5e-1" "5e-1" "7.5e-1" "1" "1.25" "1.5" "1.75" "2")
 
 store_path="/home/c/cioakeim/nns/SVMs/MULT/RBF/test_$SLURM_ARRAY_TASK_ID"
 dataset_path="/home/c/cioakeim/nns/cifar-10-batches-bin"

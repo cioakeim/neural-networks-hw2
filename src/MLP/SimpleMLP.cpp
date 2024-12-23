@@ -15,6 +15,7 @@ SimpleMLP::SimpleMLP(const float learning_rate,
   weights=MatrixXf(1,input_size);
   bias=VectorXf(1);
   output=MatrixXf(1,batch_size);
+  delta=MatrixXf(1,batch_size);
 }
 
 
@@ -41,10 +42,16 @@ void SimpleMLP::forwardPass(const MatrixXf& input){
   output=activation_function((weights*input).colwise()+bias);  
 }
 
+float SimpleMLP::getHingeLoss(const VectorXi& labels){
+  return (1-(labels.array()).cast<float>()*output.array()).cwiseMax(0).mean();
+}
 
-void getHingeLoss(const VectorXi& labels);
-void backwardPass(const MatrixXf& input,
-                  const VectorXi& labels);
+
+void SimpleMLP::backwardPass(const MatrixXf& input,
+                             const VectorXi& labels){
+    
+}
+
 
 void runEpoch();
 void testOnSet(const SampleMatrix& set,
