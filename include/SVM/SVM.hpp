@@ -50,6 +50,7 @@ private:
   OSQPSettings* settings;
   
   // The results of training
+  std::vector<int> sv_indices; //< Used for freeing SV memory and loading them when used.
   E::VectorXf lagrange_times_labels; //< Each element is a_i*y_i for usage.
   E::MatrixXf support_vectors; // Copied to achieve high testing throughput
   float b; // Computed using avg
@@ -101,7 +102,9 @@ public:
   // (Optional) Construct and free the complete dataset
   void constructDatasetFromClassSets();
   void clearDataset();
-  void clearSolution();
+  void clearSupportVectors();
+  void clearWholeSolution();
+  void loadSupportVectors();
 
   // Compute the Kernel matrix for the opt problem
   void computeKernelMatrix();

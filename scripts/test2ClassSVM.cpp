@@ -115,7 +115,7 @@ int main(int argc,char* argv[]){
     if(test_accuracy>best_accuracy){
       svm.storeToFile();
     }
-    svm.clearSolution();
+    svm.clearWholeSolution();
 
     svm.displayCurrentIntervals();
     svm.storeEventsToFile();

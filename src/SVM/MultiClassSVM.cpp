@@ -125,9 +125,7 @@ void MultiClassSVM::trainAllSVMs(float& train_hinge_loss,
       std::cout<<"Training pair: ("<<class_1<<","<<class_2<<")"<<std::endl;
       // Train the actual svm
       trainTwoClassSVM(class_1,class_2);
-      std::cout<<"End of training: "<<pair_to_svm_lut[class_1][class_2]<<std::endl;
       // Get hinge loss on training and on set
-      //SVM* svm=getSVMPointer(class_1,class_2);
       SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
       // For training 
       std::cout<<"Testing"<<std::endl;
@@ -151,6 +149,7 @@ void MultiClassSVM::trainAllSVMs(float& train_hinge_loss,
 
       std::cout<<"Done"<<std::endl;
       svm->clearDataset();
+      svm->clearSupportVectors();
     }
   }
   int svm_num=SVM_NUMBER;
@@ -173,8 +172,13 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   // Each binary SVM votes and places its confidence value in the corresponding bin
   for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
     for(int class_2=class_1+1;class_2<CLASS_NUMBER;class_2++){
-
       SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
+      // If support vectors were cleared bring them back
+      if(svm->areSupportVectorsEmpty()){
+        svm->constructDatasetFromClassSets();
+        svm->loadSupportVectors();
+      }
+
       // Get output of svm
       E::VectorXf output=svm->output(set.vectors);
       // Get prediction
@@ -211,42 +215,6 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
     votes.col(col).maxCoeff(&idx);
     final_prediction(col)=idx;
   }
-
-  // After voting get winner for each sample
-  /*
-  //#pragma omp parallel for
-  for(int sample_idx=0;sample_idx<sample_size;sample_idx++){
-    int winner_votes=0;
-    // Keep track of multiple indices in case of tie
-    std::vector<int> winner_idx;
-    for(int class_idx=0;class_idx<CLASS_NUMBER;class_idx++){
-      int class_votes=votes(class_idx,sample_idx);
-      if(class_votes>winner_votes){
-        winner_idx.clear();
-        winner_idx.push_back(class_idx);
-      }
-      else if(class_votes==winner_votes)
-        winner_idx.push_back(class_idx);
-    }
-    // Time to pick winning class
-    if(winner_idx.size()==1){
-      final_prediction(sample_idx)=winner_idx[0];
-      continue;
-    }
-    // In case of tie
-    float max_confidence=0;
-    int final_idx=0;
-    for(auto& idx: winner_idx){
-      if(total_confidence(idx)>max_confidence){
-        max_confidence=total_confidence(idx);
-        final_idx=idx;
-      }
-    }
-    // Get best index
-    final_prediction(sample_idx)=final_idx;
-  }
-  */
-
   // Get final prediction
   accuracy=(final_prediction.array()==set.labels.array()).cast<float>().mean();
 }

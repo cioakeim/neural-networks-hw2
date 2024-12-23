@@ -188,11 +188,23 @@ void SVM::clearDataset(){
 }
 
 
-void SVM::clearSolution(){
-  lagrange_times_labels.resize(0);
+void SVM::clearSupportVectors(){
   support_vectors.resize(0,0);
 }
 
+void SVM::clearWholeSolution(){
+  clearSupportVectors();
+  lagrange_times_labels.resize(0);
+}
+
+void SVM::loadSupportVectors(){
+  const int sv_sz=sv_indices.size();
+  support_vectors=E::VectorXf(class_1_test.rows(),sv_sz);
+  #pragma omp parallel for
+  for(int i=0;i<sv_sz;i++){
+    support_vectors.col(i)=training_set.vectors.col(sv_indices[i]);
+  }
+}
 
 static void eigenDenseToOSQPSparse(const E::MatrixXd& eigen,OSQPCscMatrix** osqp){
   E::SparseMatrix<double> sparse=eigen.sparseView();
@@ -414,9 +426,11 @@ void SVM::solveQuadraticProblem(){
   //settings->linsys_solver=OSQP_INDIRECT_SOLVER;
   //settings->polishing=true;
   //settings->linsys_solver=OSQP_DIRECT_SOLVER;
+  //
   omp_set_num_threads(8);
   setenv("MKL_DOMAIN_NUM_THREADS", "8", 1);
   //mkl_set_num_threads_local(8);
+  //settings->warm_starting=0;
   settings->eps_abs=1e-9;
   settings->eps_rel=1e-9;
 
@@ -455,7 +469,7 @@ void SVM::storeSupportVectors(){
   //
   std::cout<<"Check"<<std::endl;
   int sv_nz,msv_nz;
-  std::vector<int> sv_idx;
+  sv_indices.clear();
   std::vector<int> msv_idx;
   std::cout<<"Check"<<std::endl;
   for(int i=0;i<100;i++){
@@ -482,16 +496,15 @@ void SVM::storeSupportVectors(){
     const int size=a.size();
     for(int i=0;i<size;i++){
       if(a_is_sv(i)==true)
-        sv_idx.push_back(i);
+        sv_indices.push_back(i);
       if(a_is_msv(i)==true)
         msv_idx.push_back(i);
     }
-    sv_nz=sv_idx.size();
+    sv_nz=sv_indices.size();
     msv_nz=msv_idx.size();
     // And break
     break;
   }
-  std::cout<<"Check"<<std::endl;
 
   // Allocate memory for stored vectors 
   lagrange_times_labels=E::VectorXf(sv_nz);
@@ -500,28 +513,24 @@ void SVM::storeSupportVectors(){
   E::MatrixXf msvs=E::MatrixXf(training_set.vectors.rows(),msv_nz);
   E::VectorXf msv_labels=E::VectorXf(msv_nz);
   E::VectorXf msv_a_labels=E::VectorXf(msv_nz);
-  std::cout<<"Check"<<std::endl;
 
   // SV map
   for(int i=0;i<sv_nz;i++){
-    support_vectors.col(i)=training_set.vectors.col(sv_idx[i]); 
-    lagrange_times_labels(i)=a[sv_idx[i]]*training_set.labels[sv_idx[i]];
+    support_vectors.col(i)=training_set.vectors.col(sv_indices[i]); 
+    lagrange_times_labels(i)=a[sv_indices[i]]*training_set.labels[sv_indices[i]];
   }
-  std::cout<<"Check"<<std::endl;
   // If even after that there are no SVs, no saving.
   if(msv_nz==0){
     std::cerr<<"No margin support vectors, assume b=0"<<std::endl;
     b=0;
     return;
   }
-  std::cout<<"Check"<<std::endl;
   // MSV map
   for(int i=0;i<msv_nz;i++){
     msvs.col(i)=training_set.vectors.col(msv_idx[i]); 
     msv_labels(i)=training_set.labels[msv_idx[i]];
     msv_a_labels(i)=a[msv_idx[i]]*training_set.labels[msv_idx[i]];
   }
-  std::cout<<"Check"<<std::endl;
 
   std::cout<<"MSV NANS: "<<(msvs.array().isNaN().cast<int>().sum())<<std::endl;
   
