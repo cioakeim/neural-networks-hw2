@@ -21,9 +21,9 @@ private:
   // For I/O
   std::string store_path; 
   // Weights and bias
-  MatrixXf weights;
-  VectorXf bias;
-  MatrixXf output;
+  VectorXf weights;
+  float bias;
+  VectorXf output;
   VectorXf delta;
   
   // Parameters

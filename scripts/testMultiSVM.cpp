@@ -18,10 +18,11 @@ int main(int argc,char* argv[]){
   SVM2ClassConfig config;
   config.training_type=MultiClass;
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.store_path="../data/SVM_models/Multiclass/mock";
-  config.training_size=1000;
-  config.test_size=1000;
+  config.store_path="../data/SVM_models/mock2";
+  config.training_size=30000;
+  config.test_size=6000;
   config.C_list={0.001,0.01,0.1,1,10,100,1000};
+  config.C_list={1000};
   config.kernel_type=RBF;
   config.kernel_parameters.rbf_sigma=1;
   configureFromArguments(argc, argv, config);

@@ -145,6 +145,10 @@ void MultiClassSVM::trainAllSVMs(float& train_hinge_loss,
       std::cout<<"Test Hinge loss: "<<hinge_loss<<std::endl;
       test_hinge_loss+=hinge_loss;
 
+      float accuracy;
+      svm->testOnSet(svm->getTrainingSetRef(), accuracy, hinge_loss);
+      std::cout<<"TRAIN ACCURACY: "<<accuracy<<std::endl;
+
       std::cout<<"Done"<<std::endl;
       svm->clearDataset();
     }
@@ -161,12 +165,15 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   // For final mean hinge loss
   // In the below matrices, each column is for the prediction of 1 sample
   // Each SVM will place its vote here.
-  E::MatrixXi votes=E::MatrixXi(CLASS_NUMBER,sample_size);
+  E::MatrixXf votes=E::MatrixXf::Zero(CLASS_NUMBER,sample_size);
+  
   // In the case of a tie, the mean hinge losses are kept here
-  E::MatrixXf total_confidence=E::MatrixXf(CLASS_NUMBER,sample_size);
+  E::MatrixXf total_confidence=E::MatrixXf::Zero(CLASS_NUMBER,sample_size);
+
   // Each binary SVM votes and places its confidence value in the corresponding bin
   for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
     for(int class_2=class_1+1;class_2<CLASS_NUMBER;class_2++){
+
       SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
       // Get output of svm
       E::VectorXf output=svm->output(set.vectors);
@@ -176,7 +183,6 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
         std::cout<<"Error to pred"<<std::endl;
       }
       // Convert output to confidence
-      output=output.array().abs();
       // Convert to binary representation
       prediction=(prediction.array()+1)/2;
       if(((prediction.array()!=0)&&(prediction.array()!=1)).sum()>0){
@@ -189,15 +195,25 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
       }
       // For each prediction place in correct bin
       //#pragma omp parallel for
+      output=output.array().abs();
       for(int i=0;i<sample_size;i++){
-        votes(prediction(i),i)++;
+        votes(prediction(i),i)+=output(i);
         total_confidence(prediction(i),i)+=output(i);
       }
     }
   }
   // Time for voting results
   E::VectorXi final_prediction(sample_size);
+
+  // Reduce column-wise
+  for(int col=0;col<sample_size;col++){
+    E::VectorXf::Index idx;
+    votes.col(col).maxCoeff(&idx);
+    final_prediction(col)=idx;
+  }
+
   // After voting get winner for each sample
+  /*
   //#pragma omp parallel for
   for(int sample_idx=0;sample_idx<sample_size;sample_idx++){
     int winner_votes=0;
@@ -229,6 +245,8 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
     // Get best index
     final_prediction(sample_idx)=final_idx;
   }
+  */
+
   // Get final prediction
   accuracy=(final_prediction.array()==set.labels.array()).cast<float>().mean();
 }

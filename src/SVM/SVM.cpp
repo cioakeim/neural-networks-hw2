@@ -453,11 +453,13 @@ void SVM::storeSupportVectors(){
 
   // Filter support vectors (sv) and margin support vectors (msv)
   //
-  bool found_msvs=false;
+  std::cout<<"Check"<<std::endl;
   int sv_nz,msv_nz;
   std::vector<int> sv_idx;
   std::vector<int> msv_idx;
+  std::cout<<"Check"<<std::endl;
   for(int i=0;i<100;i++){
+    std::cout<<"Try: "<<i<<std::endl;
     // Get candidates for support vectors and margin support vectors
     E::ArrayX<bool> a_is_sv= (a.array() > eff_pruning);
     E::ArrayX<bool> a_is_less_than_C = (a.array() < (C - C_eps));
@@ -484,9 +486,12 @@ void SVM::storeSupportVectors(){
       if(a_is_msv(i)==true)
         msv_idx.push_back(i);
     }
+    sv_nz=sv_idx.size();
+    msv_nz=msv_idx.size();
     // And break
     break;
   }
+  std::cout<<"Check"<<std::endl;
 
   // Allocate memory for stored vectors 
   lagrange_times_labels=E::VectorXf(sv_nz);
@@ -495,24 +500,28 @@ void SVM::storeSupportVectors(){
   E::MatrixXf msvs=E::MatrixXf(training_set.vectors.rows(),msv_nz);
   E::VectorXf msv_labels=E::VectorXf(msv_nz);
   E::VectorXf msv_a_labels=E::VectorXf(msv_nz);
+  std::cout<<"Check"<<std::endl;
 
   // SV map
   for(int i=0;i<sv_nz;i++){
     support_vectors.col(i)=training_set.vectors.col(sv_idx[i]); 
     lagrange_times_labels(i)=a[sv_idx[i]]*training_set.labels[sv_idx[i]];
   }
+  std::cout<<"Check"<<std::endl;
   // If even after that there are no SVs, no saving.
   if(msv_nz==0){
     std::cerr<<"No margin support vectors, assume b=0"<<std::endl;
     b=0;
     return;
   }
+  std::cout<<"Check"<<std::endl;
   // MSV map
   for(int i=0;i<msv_nz;i++){
     msvs.col(i)=training_set.vectors.col(msv_idx[i]); 
     msv_labels(i)=training_set.labels[msv_idx[i]];
     msv_a_labels(i)=a[msv_idx[i]]*training_set.labels[msv_idx[i]];
   }
+  std::cout<<"Check"<<std::endl;
 
   std::cout<<"MSV NANS: "<<(msvs.array().isNaN().cast<int>().sum())<<std::endl;
   

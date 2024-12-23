@@ -1,6 +1,7 @@
 #include "MLP/SimpleMLP.hpp"
 #include "CommonLib/basicFuncs.hpp"
 #include <random>
+#include <iostream>
 
 SimpleMLP::SimpleMLP(const float learning_rate,
                      int input_size,
@@ -13,64 +14,71 @@ SimpleMLP::SimpleMLP(const float learning_rate,
   training_set(training_set),
   test_set(test_set){
 
-  weights=MatrixXf(1,input_size);
-  bias=VectorXf(1);
-  output=MatrixXf(1,batch_size);
-  delta=MatrixXf(1,batch_size);
+  weights=VectorXf(input_size);
+  output=VectorXf(batch_size);
+  delta=VectorXf(batch_size);
 }
 
 
 void SimpleMLP::randomInit(){
-  const int rows=weights.rows();
-  const int cols=weights.cols();
-  const float stddev= std::sqrt(2.0f/rows);
+  const int size=weights.size();
+  const float stddev= std::sqrt(2.0f/size);
   // Init rng 
   std::random_device rd;
   std::mt19937 gen(rd());
   std::normal_distribution<float> dist(0.0,stddev);
 
-  for(int i=0;i<rows;i++){
-    for(int j=0;j<cols;j++){
-      weights(i,j)=(dist(gen));
-    }
-    bias(i)=(dist(gen));
+  for(int i=0;i<size;i++){
+    weights(i)=(dist(gen));
   }
+  bias=(dist(gen));
 }
 
 
 // Classic methods
 void SimpleMLP::forwardPass(const MatrixXf& input){
-  output=activation_function((weights*input).colwise()+bias);  
+  const VectorXf u=(weights.transpose()*input).array()+bias;
+  output=u;  
 }
 
 float SimpleMLP::getHingeLoss(const VectorXi& labels){
-  return (1-(labels.array()).cast<float>()*output.array()).cwiseMax(0).mean();
+  const E::VectorXf margin=1-labels.cast<float>().array()*output.array();
+  return margin.cwiseMax(0.0f).array().mean();
 }
 
 
 void SimpleMLP::backwardPass(const MatrixXf& input,
                              const VectorXi& labels){
+  const float lambda=1e-7;
   // Get local error 
-  delta=((1-(output.cwiseProduct(labels.cast<float>())).array()).array()>0).cast<float>();
-  const E::VectorXf temp=-labels.cast<float>().array()*activation_derivative(output).array();
-  delta.cwiseProduct(temp);
+  const E::VectorXf margin=1-(output.cwiseProduct(labels.cast<float>())).array();
+  const E::VectorXf indicator=(margin.array()>0).cast<float>();
+
+
+  delta=indicator.cwiseProduct(-labels.cast<float>());
 
   // Since no other layers update on the spot 
-  weights-=input*delta.transpose()*(learning_rate/batch_size);
-  bias(0,0)-=delta.mean()*learning_rate;
+  weights-=input*delta*(learning_rate/batch_size)+lambda*weights;
+  bias-=delta.sum()*(learning_rate/batch_size)+lambda*bias;
+  //std::cout<<"Weight range: "<<weights.minCoeff()<<","<<weights.maxCoeff()<<std::endl;
 }
 
 
 void SimpleMLP::runEpoch(){
+  std::cout<<"Shufflin.."<<std::endl;
   shuffleDatasetInPlace(training_set);
+  std::cout<<"Done."<<std::endl;
   const int training_size=training_set.vectors.cols();
   for(int idx=0;idx<training_size;idx+=batch_size){
-    const MatrixXf& input=training_set.vectors.middleCols(idx,batch_size);
-    const VectorXi& labels=training_set.labels.segment(idx,batch_size);
+    const int final=(idx+batch_size)<=training_size ? batch_size : training_size-idx;
+    const MatrixXf& input=training_set.vectors.middleCols(idx,final);
+    const VectorXi& labels=training_set.labels.segment(idx,final);
     forwardPass(input);
     backwardPass(input, labels);
   }
+  std::cout<<"Epoch done."<<std::endl;
 }
+
 
 
 
