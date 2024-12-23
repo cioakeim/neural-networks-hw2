@@ -4,8 +4,8 @@
 #SBATCH --partition=rome
 #SBATCH --output=test_mult_lin.stdout
 #SBATCH --nodes=1
-#SBATCH --ntasks=32
-#SBATCH --time=6:00:00
+#SBATCH --ntasks=16
+#SBATCH --time=7:00:00
 #SBATCH --array=0
 
 

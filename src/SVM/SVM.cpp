@@ -167,7 +167,6 @@ void SVM::constructDatasetFromClassSets(){
     std::cerr<<"Bad class_2_train"<<std::endl;
     exit(1);
   }
-  std::cout<<"Constructing:"<<std::endl;
   training_set=matricesToSampleMatrix(class_1_train,class_2_train);
   if(training_set.vectors.array().isNaN().cast<int>().sum()>0){
     std::cerr<<"Error in training set creation..."<<std::endl;
@@ -176,7 +175,6 @@ void SVM::constructDatasetFromClassSets(){
   if(test_set.vectors.array().isNaN().cast<int>().sum()>0){
     std::cerr<<"Error in test set creation..."<<std::endl;
   }
-  std::cout<<"Constructed"<<std::endl;
 }
 
 
@@ -199,8 +197,8 @@ void SVM::clearWholeSolution(){
 
 void SVM::loadSupportVectors(){
   const int sv_sz=sv_indices.size();
-  support_vectors=E::VectorXf(class_1_test.rows(),sv_sz);
-  #pragma omp parallel for
+  support_vectors=E::MatrixXf(class_1_test.rows(),sv_sz);
+  //#pragma omp parallel for
   for(int i=0;i<sv_sz;i++){
     support_vectors.col(i)=training_set.vectors.col(sv_indices[i]);
   }

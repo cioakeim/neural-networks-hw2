@@ -4,8 +4,8 @@
 #SBATCH --partition=rome
 #SBATCH --output=test_mult_rbf.stdout
 #SBATCH --nodes=1
-#SBATCH --ntasks=32
-#SBATCH --time=6:00:00
+#SBATCH --ntasks=16
+#SBATCH --time=8:00:00
 #SBATCH --array=0-9
 
 
