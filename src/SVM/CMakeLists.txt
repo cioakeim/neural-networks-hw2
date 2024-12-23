@@ -1,7 +1,6 @@
 #find_package(OpenMP REQUIRED)
 #include_directories(${OpenMP_INCLUDE_DIRS})
 
-option(OSQP_MANUAL_LINK "Set to On if OSQP isn't in default location" OFF)
 
 
 find_package(MKL REQUIRED)

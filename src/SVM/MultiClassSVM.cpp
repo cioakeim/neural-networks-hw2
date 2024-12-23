@@ -1,6 +1,7 @@
 #include "SVM/MultiClassSVM.hpp"
 #include "CommonLib/basicFuncs.hpp"
 #include "SVM/SVM.hpp"
+#include <cmath>
 #include <string>
 #include <iostream>
 
@@ -61,11 +62,15 @@ void MultiClassSVM::setPath(std::string filepath){
 };
 
 
-int MultiClassSVM::getTotalSVCount(){
-  int sum=0;
+void  MultiClassSVM::getTotalSVStats(int& sum,
+                                     float& mean,
+                                     float& sigma){
+  E::VectorXf sv_cnts(SVM_NUMBER);
   for(int i=0;i<SVM_NUMBER;i++)
-    sum+=two_class_svms[i]->getSVCount();
-  return sum;
+    sv_cnts(i)=static_cast<float>(two_class_svms[i]->getSVCount());
+  sum=sv_cnts.cast<int>().sum();
+  mean=sv_cnts.mean();
+  sigma=std::sqrt(sv_cnts.array().pow(2).mean());
 }
 
 

@@ -63,7 +63,7 @@ int main(int argc,char* argv[]){
     std::cerr<<"Error in opening: "<<config.store_path+"/log.csv"<<std::endl;
     exit(1);
   }
-  log<<"C,train_accuracy,train_hinge_loss,test_accuracy,test_hinge_loss,SV#"<<"\n";
+  log<<"C,train_accuracy,train_hinge_loss,test_accuracy,test_hinge_loss,SV#,SVmean,SVstd"<<"\n";
 
 
   for(auto& c: config.C_list){
@@ -90,10 +90,12 @@ int main(int argc,char* argv[]){
     et.stop();
     std::cout<<"Train accuracy: "<<train_accuracy<<std::endl;
 
-    int sv_cnt=multSVM.getTotalSVCount();
+    int sv_cnt;
+    float sv_mean,sv_sigma;
+    multSVM.getTotalSVStats(sv_cnt,sv_mean,sv_sigma);
 
     log<<c<<","<<train_accuracy<<","<<train_hinge_loss<<","<<test_accuracy<<","
-      <<test_hinge_loss<<","<<sv_cnt<<"\n";
+      <<test_hinge_loss<<","<<sv_cnt<<","<<sv_mean<<","<<sv_sigma<<"\n";
 
     et.writeToFile(config.store_path+"/C_"+std::to_string(c)+".csv");
   }

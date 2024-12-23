@@ -3,11 +3,8 @@
 
 #include <string>
 #include <filesystem>
-#ifndef EIGEN_USE_BLAS
-#define EIGEN_USE_BLAS
-#endif
-#ifndef EIGEN_USE_LAPACK
-#define EIGEN_USE_LAPACK
+#ifndef EIGEN_USE_MKL_ALL 
+#define EIGEN_USE_MKL_ALL
 #endif
 #include <Eigen/Dense>
 #include "CommonLib/basicStructs.hpp"

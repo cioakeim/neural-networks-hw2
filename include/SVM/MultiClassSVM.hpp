@@ -42,7 +42,7 @@ public:
 
   const SampleMatrix& getTrainingSetRef(){return this->training_set;}
   const SampleMatrix& getTestSetRef(){return this->test_set;}
-  int getTotalSVCount();
+  void getTotalSVStats(int& sum,float& mean,float& sigma);
 
   void storeSVM();
   void loadSVM();
