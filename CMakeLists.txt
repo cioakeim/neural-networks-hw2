@@ -57,6 +57,12 @@ target_link_libraries(testSimpleMLP PRIVATE mlp_lib)
 target_link_libraries(testSimpleMLP PRIVATE common_lib)
 target_compile_options(testSimpleMLP PRIVATE -O3 -Wall -Wextra)
 
+add_executable(testMBMLP "${SCRIPTS}/testMBMLP.cpp")
+target_link_libraries(testMBMLP PRIVATE mlp_lib)
+target_link_libraries(testMBMLP PRIVATE common_lib)
+target_compile_options(testMBMLP PRIVATE -O3 -Wall -Wextra)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
+
 
 

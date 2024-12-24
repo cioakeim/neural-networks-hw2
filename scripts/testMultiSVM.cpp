@@ -18,13 +18,13 @@ int main(int argc,char* argv[]){
   SVM2ClassConfig config;
   config.training_type=MultiClass;
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.store_path="../data/SVM_models/mock2";
-  config.training_size=5000;
-  config.test_size=1000;
+  config.store_path="../data/SVM_models/big_test";
+  config.training_size=40000;
+  config.test_size=8000;
   config.C_list={0.001,0.01,0.1,1,10,100,1000};
-  config.C_list={1,10,100};
+  config.C_list={5};
   config.kernel_type=RBF;
-  config.kernel_parameters.rbf_sigma=0.3;
+  config.kernel_parameters.rbf_sigma=0.2;
   configureFromArguments(argc, argv, config);
 
   EventTimer script_et;
@@ -81,12 +81,15 @@ int main(int argc,char* argv[]){
     et.stop();
     std::cout<<"Done"<<std::endl;
 
+    float train_accuracy,train_hinge_loss;
+    train_accuracy=train_hinge_loss=-1;
+    /*
     std::cout<<"Test1"<<std::endl;
     et.start("Test on training set");
-    float train_accuracy,train_hinge_loss;
     multSVM.testOnSet(training_set,train_accuracy,train_hinge_loss);
     et.stop();
     std::cout<<"Done"<<std::endl;
+    */
 
     std::cout<<"Res: "<<train_accuracy<<" "<<train_hinge_loss<<std::endl;
 

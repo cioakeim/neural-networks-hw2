@@ -73,9 +73,7 @@ void SimpleMLP::backwardPass(const MatrixXf& input,
 
 
 void SimpleMLP::runEpoch(){
-  std::cout<<"Shufflin.."<<std::endl;
   shuffleDatasetInPlace(training_set);
-  std::cout<<"Done."<<std::endl;
   const int training_size=training_set.vectors.cols();
   for(int idx=0;idx<training_size;idx+=batch_size){
     const int final=(idx+batch_size)<=training_size ? batch_size : training_size-idx;
@@ -84,7 +82,6 @@ void SimpleMLP::runEpoch(){
     forwardPass(input);
     backwardPass(input, labels);
   }
-  std::cout<<"Epoch done."<<std::endl;
 }
 
 

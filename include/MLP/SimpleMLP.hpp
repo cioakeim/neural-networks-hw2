@@ -60,6 +60,13 @@ public:
     this->activation_derivative=f_dot;
   }
   void loadDataset();
+  void clearDataset(){
+    training_set.vectors.conservativeResize(0,0);
+    training_set.labels.conservativeResize(0);
+    test_set.vectors.conservativeResize(0,0);
+    test_set.labels.conservativeResize(0);
+  }
+
   void randomInit();
 
   // Classic methods
@@ -67,6 +74,7 @@ public:
   float getHingeLoss(const VectorXi& labels);
   void backwardPass(const MatrixXf& input,
                     const VectorXi& labels);
+  E::VectorXf copyOutput(){return output;}
 
   void runEpoch();
   void testOnSet(const SampleMatrix& set,

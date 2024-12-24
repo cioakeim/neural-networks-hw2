@@ -48,13 +48,14 @@ public:
 
   void randomInit();
   void loadDatasets();
-  void runEpoch();
+  void runEpochBatch(int epoch_batch);
 
   float trainHingeLoss();
   float testHingeLoss();
 
   void testOnSet(const SampleMatrix& set,
-                 float& accuracy);
+                 float& accuracy,
+                 float& hinge_loss);
 
 
   
