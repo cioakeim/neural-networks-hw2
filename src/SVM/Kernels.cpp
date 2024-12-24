@@ -4,7 +4,7 @@
 
 E::MatrixXf linear_kernel(const E::MatrixXf& a,const E::MatrixXf& b,
                           KernelParameters param){
-  return a.transpose()*b;
+  return a.transpose()*b/(a.rows());
 }
 
 

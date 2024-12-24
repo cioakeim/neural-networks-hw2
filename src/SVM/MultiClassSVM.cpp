@@ -167,7 +167,6 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   E::MatrixXf votes=E::MatrixXf::Zero(CLASS_NUMBER,sample_size);
   
   // In the case of a tie, the mean hinge losses are kept here
-  E::MatrixXf total_confidence=E::MatrixXf::Zero(CLASS_NUMBER,sample_size);
 
   // Each binary SVM votes and places its confidence value in the corresponding bin
   for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
@@ -183,26 +182,16 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
       E::VectorXf output=svm->output(set.vectors);
       // Get prediction
       E::VectorXi prediction=svm->predictSet(output);
-      if(((prediction.array()!=-1)&&(prediction.array()!=1)).sum()>0){
-        std::cout<<"Error to pred"<<std::endl;
-      }
       // Convert output to confidence
       // Convert to binary representation
       prediction=(prediction.array()+1)/2;
-      if(((prediction.array()!=0)&&(prediction.array()!=1)).sum()>0){
-        std::cout<<"Error to binary"<<std::endl;
-      }
       // Convert to class ids
       prediction=(prediction.array()*class_1+(1-prediction.array())*class_2);
-      if(((prediction.array()<0)||(prediction.array()>9)).sum()>0){
-        std::cout<<"Error to class_id"<<std::endl;
-      }
       // For each prediction place in correct bin
-      //#pragma omp parallel for
       output=output.array().abs();
+      #pragma omp parallel for
       for(int i=0;i<sample_size;i++){
         votes(prediction(i),i)+=output(i);
-        total_confidence(prediction(i),i)+=output(i);
       }
     }
   }
@@ -210,6 +199,7 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   E::VectorXi final_prediction(sample_size);
 
   // Reduce column-wise
+  #pragma omp parallel for
   for(int col=0;col<sample_size;col++){
     E::VectorXf::Index idx;
     votes.col(col).maxCoeff(&idx);

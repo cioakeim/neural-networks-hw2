@@ -19,16 +19,17 @@ int main(int argc,char* argv[]){
   config.training_type=OneVsOne;
   config.store_path="../data/SVM_models/linear_model";
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.training_size=30000;
+  config.training_size=50000;
   config.test_size=10000;
   config.class1_id=0;
   config.class2_id=2;
   //config.C_list={1e-3,5e-3,1e-2,1e-1,1,5,10,50,100,1000};
-  config.C_list={1e-3,1e-2,1e-1,1,2,5,10,100};
+  //config.C_list={1e-3,1e-2,1e-1,1,2,5,10,100};
+  config.C_list={100};
   config.kernel_parameters.poly_c=1;
   config.kernel_parameters.poly_d=2;
   config.kernel_parameters.rbf_sigma=0.1;
-  config.kernel_type=LINEAR;
+  config.kernel_type=RBF;
   configureFromArguments(argc,argv,config);
   std::cout<<"Configuration done"<<std::endl;
 
@@ -97,12 +98,14 @@ int main(int argc,char* argv[]){
       continue;
     }
     // Test on training set 
+    std::cout<<"Train test"<<std::endl;
     float train_accuracy,train_hinge_loss;
     svm.startEvent("Test on training set");
     svm.testOnSet(svm.getTrainingSetRef(),train_accuracy,train_hinge_loss);
     svm.stopEvent();
     // Test on test set
     float test_accuracy,test_hinge_loss;
+    std::cout<<"Test test"<<std::endl;
     svm.startEvent("Test on test set");
     svm.testOnSet(svm.getTestSetRef(),test_accuracy,test_hinge_loss);
     svm.stopEvent(); 
@@ -112,9 +115,11 @@ int main(int argc,char* argv[]){
       <<test_accuracy<<","<<test_hinge_loss<<"\n";
 
     // If it's the best so far, store
+    /*
     if(test_accuracy>best_accuracy){
       svm.storeToFile();
     }
+    */
     svm.clearWholeSolution();
 
     svm.displayCurrentIntervals();

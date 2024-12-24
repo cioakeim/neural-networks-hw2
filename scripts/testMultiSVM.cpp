@@ -19,12 +19,12 @@ int main(int argc,char* argv[]){
   config.training_type=MultiClass;
   config.dataset_path="../data/cifar-10-batches-bin";
   config.store_path="../data/SVM_models/mock2";
-  config.training_size=500;
-  config.test_size=100;
+  config.training_size=1000;
+  config.test_size=200;
   config.C_list={0.001,0.01,0.1,1,10,100,1000};
-  config.C_list={0.01,1000};
-  config.kernel_type=LINEAR;
-  config.kernel_parameters.rbf_sigma=1;
+  config.C_list={1000};
+  config.kernel_type=RBF;
+  config.kernel_parameters.rbf_sigma=0.1;
   configureFromArguments(argc, argv, config);
 
   EventTimer script_et;
@@ -99,6 +99,7 @@ int main(int argc,char* argv[]){
     log<<c<<","<<train_accuracy<<","<<train_hinge_loss<<","<<test_accuracy<<","
       <<test_hinge_loss<<","<<sv_cnt<<","<<sv_mean<<","<<sv_sigma<<"\n";
 
+    et.displayIntervals();
     et.writeToFile(config.store_path+"/C_"+std::to_string(c)+".csv");
   }
   log.close();

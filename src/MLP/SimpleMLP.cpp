@@ -4,19 +4,27 @@
 #include <iostream>
 
 SimpleMLP::SimpleMLP(const float learning_rate,
-                     int input_size,
-                     int batch_size,
-                     SampleMatrix& training_set,
-                     SampleMatrix& test_set):
+                     const int input_size,
+                     const int batch_size,
+                     const int class1,const int class2,
+                     const SampleMatrix& training_set,
+                     const SampleMatrix& test_set):
   learning_rate(learning_rate),
   input_size(input_size),
   batch_size(batch_size),
-  training_set(training_set),
-  test_set(test_set){
+  class1(class1),class2(class2),
+  full_training_set(training_set),
+  full_test_set(test_set){
 
   weights=VectorXf(input_size);
   output=VectorXf(batch_size);
   delta=VectorXf(batch_size);
+}
+
+
+void SimpleMLP::loadDataset(){
+  training_set=extract1v1Dataset(full_training_set, class1, class2);
+  test_set=extract1v1Dataset(full_test_set, class1, class2);
 }
 
 

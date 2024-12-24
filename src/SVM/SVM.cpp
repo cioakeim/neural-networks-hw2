@@ -330,9 +330,13 @@ void SVM::computeKernelMatrix(){
   std::cout<<"Size of float: "<<sizeof(OSQPFloat)<<std::endl;
   // Compute dense kernel.
   //std::cout<<"Calling kernel"<<std::endl;
+  EventTimer et;
+  et.start("Kernel");
   E::MatrixXd denseKernel=kernel(training_set.vectors,
                                  training_set.vectors,
                                  kernel_parameters).cast<double>();
+  et.stop();
+  et.displayIntervals();
   
   //std::cout<<"Called kernel"<<std::endl;
   const E::MatrixXd Y=(training_set.labels*training_set.labels.transpose()).cast<double>();
@@ -350,28 +354,11 @@ void SVM::computeKernelMatrix(){
   }
   */
 
-  if (!mat.isApprox(mat.transpose(), 1e-6)) {
-    std::cout << "Matrix is not symmetric due to precision issues" << std::endl;
-  }
 
-
-  /**
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(mat);
-  std::cout << "Minimum eigenvalue: " << solver.eigenvalues().minCoeff() << std::endl;
-  */
 
   std::cout<<"Max coeff: "<<mat.maxCoeff()<<std::endl;
   std::cout<<"Min abs coeff: "<<mat.cwiseAbs().minCoeff()<<std::endl;
 
-  /**
-  const int row=mat.rows();
-  for(int i=0;i<row;i++){
-    E::MatrixXf sub=mat.topLeftCorner(i,i);
-    if(mat.determinant()<0){
-      std::cout<<"NON CONVEX"<<std::endl;
-    }
-  }
-  */
 
   E::MatrixXd triang=mat.triangularView<E::Upper>();
   //E::MatrixXf triang=denseKernel.cwiseProduct(Y.cast<float>()).triangularView<E::Upper>();

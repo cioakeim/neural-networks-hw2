@@ -50,6 +50,7 @@ int main(int argc,char* argv[]){
 
   std::cout<<"Constructing mlp"<<std::endl;
   SimpleMLP mlp=SimpleMLP(learning_rate,input_size,batch_size,
+                          class1_id,class2_id,
                           training_set,test_set);
   std::cout<<"Success"<<std::endl;
 
@@ -57,6 +58,7 @@ int main(int argc,char* argv[]){
 
 
   mlp.randomInit();
+  mlp.loadDataset();
   mlp.setFunction(linear, linearder);
   mlp.setStorePath(store_path);
 

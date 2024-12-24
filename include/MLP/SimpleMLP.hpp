@@ -33,17 +33,25 @@ private:
   const int input_size;
   const int batch_size;
 
+
+  // Ref to full stuff
+  const SampleMatrix& full_training_set;
+  const SampleMatrix& full_test_set;
+  const int class1,class2;
+
   // Dataset
-  SampleMatrix& training_set;
-  SampleMatrix& test_set;
+  SampleMatrix training_set;
+  SampleMatrix test_set;
+
 
   
 public:
   SimpleMLP(const float learning_rate,
-            int input_size,
-            int batch_size,
-            SampleMatrix& training_set,
-            SampleMatrix& test_set);
+            const int input_size,
+            const int batch_size,
+            const int class1,const int class2,
+            const SampleMatrix& training_set,
+            const SampleMatrix& test_set);
 
 
   void setStorePath(std::string path){this->store_path=path;}
@@ -51,6 +59,7 @@ public:
     this->activation_function=f;
     this->activation_derivative=f_dot;
   }
+  void loadDataset();
   void randomInit();
 
   // Classic methods
