@@ -17,10 +17,10 @@ namespace E=Eigen;
 int main(int argc,char* argv[]){
   SVM2ClassConfig config;
   config.training_type=OneVsOne;
-  config.store_path="../data/SVM_models/linear_model";
+  config.store_path="../data/SVM_models/dummy";
   config.dataset_path="../data/cifar-10-batches-bin";
-  config.training_size=50000;
-  config.test_size=10000;
+  config.training_size=1000;
+  config.test_size=100;
   config.class1_id=0;
   config.class2_id=2;
   //config.C_list={1e-3,5e-3,1e-2,1e-1,1,5,10,50,100,1000};
@@ -86,12 +86,19 @@ int main(int argc,char* argv[]){
   }
   log<<"C,train_accuracy,train_hinge_loss,test_accuracy,test_hinge_loss"<<"\n";
 
+  
+  svm.computeKernelMatrix();
+  svm.configLinearCostTerm();
   float best_accuracy=-INFINITY;
   for(auto c: config.C_list){
     // Set C 
     svm.setC(c);
     // Solve and store solution
-    svm.solveAndStore();
+    svm.configConstraints();
+    svm.solveQuadraticProblem();
+    svm.storeSVIndicesAndAVector();
+    svm.storeSupportVectors();
+    //svm.solveAndStore();
 
     if(svm.areSupportVectorsEmpty()){
       std::cout<<"No SVs were found in this run."<<std::endl;
@@ -120,10 +127,19 @@ int main(int argc,char* argv[]){
       svm.storeToFile();
     }
     */
-    svm.clearWholeSolution();
 
     svm.displayCurrentIntervals();
     svm.storeEventsToFile();
+    // Done in place 
+    svm.storeToFile();
+    svm.clearWholeSolution();
+    svm.loadFromFile();
+    svm.loadSupportVectors();
+    std::cout<<"Train test"<<std::endl;
+    svm.testOnSet(svm.getTrainingSetRef(),train_accuracy,train_hinge_loss);
+    std::cout<<"Test test"<<std::endl;
+    svm.testOnSet(svm.getTestSetRef(),test_accuracy,test_hinge_loss);
+
   }
   log.close();
   et.stop();

@@ -74,6 +74,7 @@ void storeMatrixToFile(const std::string file_path,
 }
 
 
+
 void shuffleDatasetInPlace(SampleMatrix& set){
   const int training_size=set.vectors.cols();
   // Shuffle training set 

@@ -19,12 +19,12 @@ int main(int argc,char* argv[]){
   config.training_type=MultiClass;
   config.dataset_path="../data/cifar-10-batches-bin";
   config.store_path="../data/SVM_models/mock2";
-  config.training_size=1000;
-  config.test_size=200;
+  config.training_size=5000;
+  config.test_size=1000;
   config.C_list={0.001,0.01,0.1,1,10,100,1000};
-  config.C_list={1000};
+  config.C_list={1,10,100};
   config.kernel_type=RBF;
-  config.kernel_parameters.rbf_sigma=0.1;
+  config.kernel_parameters.rbf_sigma=0.3;
   configureFromArguments(argc, argv, config);
 
   EventTimer script_et;
@@ -58,6 +58,14 @@ int main(int argc,char* argv[]){
     break;
   }
 
+  EventTimer et;
+
+  std::cout<<"Train"<<std::endl;
+  et.start("Train multi-class");
+  multSVM.trainAllSVMs(config.C_list);
+  et.stop();
+  std::cout<<"Done."<<std::endl;
+
   // Create log file
   std::ofstream log(config.store_path+"/log.csv");
   if(!log.is_open()){
@@ -66,45 +74,41 @@ int main(int argc,char* argv[]){
   }
   log<<"C,train_accuracy,train_hinge_loss,test_accuracy,test_hinge_loss,SV#,SVmean,SVstd"<<"\n";
 
-
-  for(auto& c: config.C_list){
-    EventTimer et;
-
-    multSVM.setCToAll(c);
-    float train_hinge_loss,test_hinge_loss;
-
-    et.start("Train multiclass SVM");
-    multSVM.trainAllSVMs(train_hinge_loss,test_hinge_loss);
+  for(auto c: config.C_list){
+    std::cout<<"Load"<<std::endl;
+    et.start("Loading");
+    multSVM.loadSVMs(c);
     et.stop();
+    std::cout<<"Done"<<std::endl;
 
-    std::cout<<"Train hinge loss: "<<train_hinge_loss<<"\nTest Hinge Loss: "<<test_hinge_loss<<std::endl;
-
-    float test_accuracy,train_accuracy;
-    et.start("Test on test set");
-    multSVM.testOnSet(multSVM.getTestSetRef(), test_accuracy);
-    et.stop();
-    std::cout<<"Test accuracy: "<<test_accuracy<<std::endl;
-
-
+    std::cout<<"Test1"<<std::endl;
     et.start("Test on training set");
-    multSVM.testOnSet(multSVM.getTrainingSetRef(), train_accuracy);
+    float train_accuracy,train_hinge_loss;
+    multSVM.testOnSet(training_set,train_accuracy,train_hinge_loss);
     et.stop();
-    std::cout<<"Train accuracy: "<<train_accuracy<<std::endl;
+    std::cout<<"Done"<<std::endl;
 
-    int sv_cnt;
-    float sv_mean,sv_sigma;
-    multSVM.getTotalSVStats(sv_cnt,sv_mean,sv_sigma);
-    
+    std::cout<<"Res: "<<train_accuracy<<" "<<train_hinge_loss<<std::endl;
 
-    log<<c<<","<<train_accuracy<<","<<train_hinge_loss<<","<<test_accuracy<<","
-      <<test_hinge_loss<<","<<sv_cnt<<","<<sv_mean<<","<<sv_sigma<<"\n";
+    std::cout<<"Test2"<<std::endl;
+    et.start("Test on test set");
+    float test_accuracy,test_hinge_loss;
+    multSVM.testOnSet(test_set,test_accuracy,test_hinge_loss);
+    et.stop();
+    std::cout<<"Done"<<std::endl;
+    std::cout<<"Res: "<<test_accuracy<<" "<<test_hinge_loss<<std::endl;
 
-    et.displayIntervals();
-    et.writeToFile(config.store_path+"/C_"+std::to_string(c)+".csv");
+    int sum;
+    float mean,sigma;
+    multSVM.getTotalSVStats(sum,mean,sigma);
+
+    log<<c<<","<<train_accuracy<<","<<train_hinge_loss<<","
+      <<test_accuracy<<","<<test_hinge_loss<<","
+      <<sum<<","<<mean<<","<<sigma<<"\n";
   }
+
   log.close();
-
-
+  et.displayIntervals();
 
   
   script_et.stop();

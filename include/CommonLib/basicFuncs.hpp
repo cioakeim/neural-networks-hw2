@@ -23,6 +23,11 @@ E::MatrixXf loadMatrixFromFile(const std::string file_path);
 void storeMatrixToFile(const std::string file_path,
                        const E::MatrixXf matrix);
 
+E::MatrixXf loadVectorFromFile(const std::string file_path);
+
+void storeVectorToFile(const std::string file_path,
+                       const E::MatrixXf matrix);
+
 void normalizeSet(SampleMatrix& set);
 
 void shuffleDatasetInPlace(SampleMatrix& set);

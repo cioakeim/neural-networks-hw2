@@ -51,6 +51,7 @@ private:
   
   // The results of training
   std::vector<int> sv_indices; //< Used for freeing SV memory and loading them when used.
+  std::vector<int> msv_indices; //< Same but for margin support vectors
   E::VectorXf lagrange_times_labels; //< Each element is a_i*y_i for usage.
   E::MatrixXf support_vectors; // Copied to achieve high testing throughput
   float b; // Computed using avg
@@ -85,6 +86,7 @@ public:
     this->kernel_parameters=kernel_parameters;
   }
   void setC(float C){this->C=C;}
+  float getC(){return this->C;}
   void setFolderPath(std::string folder_path){this->folder_path=folder_path;}
 
 
@@ -92,7 +94,7 @@ public:
   const SampleMatrix& getTestSetRef(){return test_set;}
   int getSVCount(){return support_vectors.cols();}
 
-  // Store the solution
+  // Store the solution (Not actual vectors)
   void storeToFile();
   // Load solution
   void loadFromFile();
@@ -115,7 +117,12 @@ public:
 
   void solveQuadraticProblem();
 
+  void storeSVIndicesAndAVector();
+
   void storeSupportVectors();
+
+
+  void deconstructQPProblem();
 
   // Usage of model
 
@@ -138,6 +145,7 @@ public:
 
   // Wrappers
 
+  void createQPProblem();
   void solveAndStore();
 
 

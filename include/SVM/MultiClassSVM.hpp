@@ -54,14 +54,17 @@ public:
 
   void setCToAll(float C);
 
-  void trainTwoClassSVM(int class_1_idx,int class_2_idx);
 
   // Since hinge loss doesn't make sense on the testing phase, calculate here
-  void trainAllSVMs(float& train_hinge_loss,
-                    float& test_hinge_loss);
+  void trainAllSVMs(std::vector<float> C_list);
+
+  void loadSVMs(const float c);
 
   void testOnSet(const SampleMatrix& set,
-                 float& accuracy);
+                 float& accuracy,
+                 float& hinge_loss);
+
+
 };
 
 

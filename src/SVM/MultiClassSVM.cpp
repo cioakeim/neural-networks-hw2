@@ -91,75 +91,47 @@ void MultiClassSVM::setCToAll(float C){
 }
 
 
-void MultiClassSVM::trainTwoClassSVM(int class_1_idx,int class_2_idx){
-  /**
-  for(int i=0;i<CLASS_NUMBER;i++){
-    for(int j=0;j<CLASS_NUMBER;j++){
-      std::cout<<this->pair_to_svm_lut[i][j]<<" ";
-    }
-    std::cout<<"\n"<<std::endl;
-  }
-  */
-  // Select svm using LUT
-  //std::cout<<"Here"<<std::endl;
-  //std::cout<<"Indices: "<<class_1_idx<<","<<class_2_idx<<std::endl;
-  //std::cout<<"Svm idx: "<<pair_to_svm_lut[class_1_idx][class_2_idx]<<std::endl;
-  SVM* svm=two_class_svms[pair_to_svm_lut[class_1_idx][class_2_idx]];
 
-  //std::cout<<"Construct"<<std::endl;
-  svm->constructDatasetFromClassSets();
-  //std::cout<<"Solve"<<std::endl;
-  svm->solveAndStore();
-  //std::cout<<"Clear"<<std::endl;
-  //svm->clearSolution();
+void MultiClassSVM::trainAllSVMs(std::vector<float> C_list){
+  for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
+    for(int class_2=class_1+1;class_2<CLASS_NUMBER;class_2++){
+      SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
+      svm->constructDatasetFromClassSets();
+      svm->computeKernelMatrix();
+      svm->configLinearCostTerm();
+      for(auto c: C_list){
+        svm->setC(c);
+        svm->configConstraints();
+        svm->solveQuadraticProblem();
+        svm->storeSVIndicesAndAVector();
+        svm->storeToFile();
+        svm->clearWholeSolution();
+      }
+      svm->clearDataset();
+      svm->deconstructQPProblem();
+    }
+  }
 }
 
 
-
-
-void MultiClassSVM::trainAllSVMs(float& train_hinge_loss,
-                                 float& test_hinge_loss){
-  train_hinge_loss=test_hinge_loss=0;
-  for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
-    for(int class_2=class_1+1;class_2<CLASS_NUMBER;class_2++){
-      std::cout<<"Training pair: ("<<class_1<<","<<class_2<<")"<<std::endl;
-      // Train the actual svm
-      trainTwoClassSVM(class_1,class_2);
-      // Get hinge loss on training and on set
-      SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
-      // For training 
-      std::cout<<"Testing"<<std::endl;
-      const E::VectorXf tr_out=svm->output(svm->getTrainingSetRef().vectors);
-      std::cout<<"Train"<<std::endl;
-      float hinge_loss=svm->getHingeLoss(tr_out,
-                                         svm->getTrainingSetRef().labels);
-      std::cout<<"Hinge loss: "<<hinge_loss<<std::endl;
-      train_hinge_loss+=hinge_loss;
-      // For testing
-      const E::VectorXf te_out=svm->output(svm->getTestSetRef().vectors);
-      std::cout<<"Test"<<std::endl;
-      hinge_loss=svm->getHingeLoss(te_out,
-                                   svm->getTestSetRef().labels);
-      std::cout<<"Test Hinge loss: "<<hinge_loss<<std::endl;
-      test_hinge_loss+=hinge_loss;
-
-      float accuracy;
-      svm->testOnSet(svm->getTrainingSetRef(), accuracy, hinge_loss);
-      std::cout<<"TRAIN ACCURACY: "<<accuracy<<std::endl;
-
-      std::cout<<"Done"<<std::endl;
-      svm->clearDataset();
-      svm->clearSupportVectors();
-    }
+void MultiClassSVM::loadSVMs(const float c){
+  for(int i=0;i<SVM_NUMBER;i++){
+    SVM* svm=two_class_svms[i];
+    svm->constructDatasetFromClassSets();
+    svm->clearWholeSolution();
+    svm->setC(c);
+    svm->loadFromFile();
+    svm->loadSupportVectors();
+    svm->clearDataset();
   }
-  int svm_num=SVM_NUMBER;
-  train_hinge_loss/=static_cast<float>(svm_num);
-  test_hinge_loss/=static_cast<float>(svm_num);
 }
 
 
 void MultiClassSVM::testOnSet(const SampleMatrix& set,
-                              float& accuracy){
+                              float& accuracy,
+                              float& hinge_loss){
+  EventTimer my_et;
+  int hinge_denominator=0;
   const int sample_size=set.labels.size();
   // For final mean hinge loss
   // In the below matrices, each column is for the prediction of 1 sample
@@ -168,33 +140,35 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   
   // In the case of a tie, the mean hinge losses are kept here
 
+  my_et.start("Phase1");
   // Each binary SVM votes and places its confidence value in the corresponding bin
   for(int class_1=0;class_1<CLASS_NUMBER-1;class_1++){
     for(int class_2=class_1+1;class_2<CLASS_NUMBER;class_2++){
       SVM* svm=two_class_svms[pair_to_svm_lut[class_1][class_2]];
-      // If support vectors were cleared bring them back
-      if(svm->areSupportVectorsEmpty()){
-        svm->constructDatasetFromClassSets();
-        svm->loadSupportVectors();
-      }
-
       // Get output of svm
-      E::VectorXf output=svm->output(set.vectors);
+      const E::VectorXf output=svm->output(set.vectors);
       // Get prediction
-      E::VectorXi prediction=svm->predictSet(output);
+      const E::VectorXi prediction=svm->predictSet(output);
       // Convert output to confidence
       // Convert to binary representation
-      prediction=(prediction.array()+1)/2;
+      const E::VectorXi pred_class_bin=(prediction.array()+1)/2;
       // Convert to class ids
-      prediction=(prediction.array()*class_1+(1-prediction.array())*class_2);
+      const E::VectorXi pred_class_id=(pred_class_bin.array()*class_1+(1-pred_class_bin.array())*class_2);
       // For each prediction place in correct bin
-      output=output.array().abs();
       #pragma omp parallel for
       for(int i=0;i<sample_size;i++){
-        votes(prediction(i),i)+=output(i);
+        votes(pred_class_id(i),i)+=std::abs(output(i));
       }
+      // For hinge loss
+      const E::VectorXi bin_labels=(set.labels.array()==class_1).array().cast<int>()-
+                                   (set.labels.array()==class_2).array().cast<int>();
+      hinge_loss+=(1-output.array()*bin_labels.cast<float>().array()).cwiseMax(0).sum();
+      hinge_denominator+=(bin_labels.array()!=0).cast<int>().sum();
     }
   }
+  my_et.stop();
+
+  my_et.start("Phase2");
   // Time for voting results
   E::VectorXi final_prediction(sample_size);
 
@@ -207,6 +181,9 @@ void MultiClassSVM::testOnSet(const SampleMatrix& set,
   }
   // Get final prediction
   accuracy=(final_prediction.array()==set.labels.array()).cast<float>().mean();
+  hinge_loss=hinge_loss/hinge_denominator;
+  my_et.stop();
+  my_et.displayIntervals();
 }
 
 
